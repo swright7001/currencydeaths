@@ -1,29 +1,55 @@
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16">
-      <section
-        aria-labelledby="project-title"
-        className="w-full max-w-2xl border border-zinc-800 bg-zinc-950 p-8 sm:p-12"
-      >
-        <p className="font-mono text-xs uppercase tracking-[0.24em] text-red-500">
-          Research project foundation
-        </p>
-        <h1
-          id="project-title"
-          className="mt-4 text-4xl font-semibold tracking-tight text-zinc-100 sm:text-6xl"
-        >
-          CurrencyDeaths
-        </h1>
-        <p className="mt-6 max-w-xl text-base leading-7 text-zinc-400 sm:text-lg">
-          An educational monetary-history and purchasing-power research project.
-          The research experience is being built through independently reviewed,
-          source-disciplined releases.
-        </p>
-        <p className="mt-10 border-l-2 border-red-700 pl-4 text-sm leading-6 text-zinc-500">
-          No live data, risk score, or currency claims are published in this
-          foundation release.
-        </p>
-      </section>
+    <main id="main-content" className="home-opening">
+      <div className="shell-container home-opening__grid">
+        <section className="home-opening__copy" aria-labelledby="project-title">
+          <p className="section-kicker">Monetary history research archive</p>
+          <h1 id="project-title">
+            Every currency
+            <span>leaves a record.</span>
+          </h1>
+          <p className="home-opening__lede">
+            CurrencyDeaths documents how monetary systems changed, failed, and
+            were replaced—without turning interpretation into fact.
+          </p>
+          <div className="home-opening__rule" aria-hidden="true">
+            <span />
+          </div>
+          <p className="home-opening__note">
+            The archive is being assembled through source-disciplined,
+            independently reviewed releases.
+          </p>
+        </section>
+
+        <aside className="release-dossier" aria-labelledby="release-title">
+          <div className="release-dossier__header">
+            <p id="release-title">Foundation status</p>
+            <span>CD / 000</span>
+          </div>
+          <dl>
+            <div>
+              <dt>Application shell</dt>
+              <dd data-status="active">Active</dd>
+            </div>
+            <div>
+              <dt>Historical records</dt>
+              <dd>Pending review</dd>
+            </div>
+            <div>
+              <dt>Dollar metrics</dt>
+              <dd>Withheld</dd>
+            </div>
+            <div>
+              <dt>Published claims</dt>
+              <dd className="metric-numerals">00</dd>
+            </div>
+          </dl>
+          <p className="release-dossier__notice">
+            No live data, risk score, countdown date, or historical claim is
+            published in this foundation release.
+          </p>
+        </aside>
+      </div>
     </main>
   );
 }
