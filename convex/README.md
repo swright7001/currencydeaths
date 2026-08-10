@@ -1,6 +1,6 @@
 # Convex functions
 
-This directory is the backend boundary for CurrencyDeaths. The domain schema and production data are intentionally deferred to later approved issues.
+This directory is the backend boundary for CurrencyDeaths. The initial monetary-history schema is documented in [`docs/data-model.md`](../docs/data-model.md). Production data remains deferred to later approved issues.
 
 Run `npx convex dev` from the repository root to configure an approved local deployment and regenerate `convex/_generated`. Commit generated types; do not edit them manually.
 
