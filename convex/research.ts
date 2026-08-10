@@ -1,5 +1,8 @@
 import { ConvexError, v } from "convex/values";
-import { historicalDateToKey } from "../lib/data/historical-date";
+import {
+  historicalDateToBounds,
+  historicalDateToKey,
+} from "../lib/data/historical-date";
 import { internalMutation, query } from "./_generated/server";
 import {
   currencyEventTypeValidator,
@@ -49,7 +52,7 @@ const currencySummaryValidator = v.object({
 
 const metricWithSourceValidator = v.object({
   metric: v.string(),
-  observationDate: v.string(),
+  observationDate: historicalDateValidator,
   value: v.number(),
   unit: v.string(),
   notes: v.union(v.null(), v.string()),
@@ -63,20 +66,9 @@ function requireSlug(slug: string) {
   }
 }
 
-function requireObservationDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (match === null) {
-    throw new ConvexError("Observation date must be a valid ISO calendar date (YYYY-MM-DD).");
-  }
-  try {
-    historicalDateToKey({
-      year: Number(match[1]),
-      month: Number(match[2]),
-      day: Number(match[3]),
-      precision: "day",
-    });
-  } catch {
-    throw new ConvexError("Observation date must be a valid ISO calendar date (YYYY-MM-DD).");
+function requireFiniteMetricValue(value: number) {
+  if (!Number.isFinite(value)) {
+    throw new ConvexError("Metric value must be a finite number.");
   }
 }
 
@@ -159,9 +151,9 @@ export const createCurrency = internalMutation({
   returns: v.id("currencies"),
   handler: async (ctx, args) => {
     requireSlug(args.slug);
-    const startKey = historicalDateToKey(args.startDate);
-    const endKey = args.endDate === undefined ? null : historicalDateToKey(args.endDate);
-    if (endKey !== null && endKey < startKey) {
+    const startBounds = historicalDateToBounds(args.startDate);
+    const endBounds = args.endDate === undefined ? null : historicalDateToBounds(args.endDate);
+    if (endBounds !== null && endBounds.latestKey < startBounds.earliestKey) {
       throw new ConvexError("Currency end date cannot precede its start date.");
     }
     if (
@@ -234,7 +226,7 @@ export const createCurrencyMetric = internalMutation({
   args: {
     currencyId: v.id("currencies"),
     metric: v.string(),
-    observationDate: v.string(),
+    observationDate: historicalDateValidator,
     value: v.number(),
     unit: v.string(),
     sourceId: v.id("sources"),
@@ -243,7 +235,8 @@ export const createCurrencyMetric = internalMutation({
   },
   returns: v.id("currencyMetrics"),
   handler: async (ctx, args) => {
-    requireObservationDate(args.observationDate);
+    const observationDateKey = historicalDateToKey(args.observationDate);
+    requireFiniteMetricValue(args.value);
     const [currency, source] = await Promise.all([
       ctx.db.get(args.currencyId),
       ctx.db.get(args.sourceId),
@@ -255,14 +248,19 @@ export const createCurrencyMetric = internalMutation({
       throw new ConvexError("Referenced source does not exist.");
     }
     const now = Date.now();
-    return await ctx.db.insert("currencyMetrics", { ...args, createdAt: now, updatedAt: now });
+    return await ctx.db.insert("currencyMetrics", {
+      ...args,
+      observationDateKey,
+      createdAt: now,
+      updatedAt: now,
+    });
   },
 });
 
 export const createDollarMetric = internalMutation({
   args: {
     metric: v.string(),
-    observationDate: v.string(),
+    observationDate: historicalDateValidator,
     value: v.number(),
     unit: v.string(),
     sourceId: v.id("sources"),
@@ -271,12 +269,18 @@ export const createDollarMetric = internalMutation({
   },
   returns: v.id("dollarMetrics"),
   handler: async (ctx, args) => {
-    requireObservationDate(args.observationDate);
+    const observationDateKey = historicalDateToKey(args.observationDate);
+    requireFiniteMetricValue(args.value);
     if ((await ctx.db.get(args.sourceId)) === null) {
       throw new ConvexError("Referenced source does not exist.");
     }
     const now = Date.now();
-    return await ctx.db.insert("dollarMetrics", { ...args, createdAt: now, updatedAt: now });
+    return await ctx.db.insert("dollarMetrics", {
+      ...args,
+      observationDateKey,
+      createdAt: now,
+      updatedAt: now,
+    });
   },
 });
 
@@ -352,7 +356,7 @@ export const getLatestCurrencyMetric = query({
   handler: async (ctx, args) => {
     const observation = await ctx.db
       .query("currencyMetrics")
-      .withIndex("by_currency_id_and_metric_and_observation_date", (q) =>
+      .withIndex("by_currency_id_and_metric_and_observation_date_key", (q) =>
         q.eq("currencyId", args.currencyId).eq("metric", args.metric),
       )
       .order("desc")
@@ -390,7 +394,7 @@ export const getLatestDollarMetric = query({
   handler: async (ctx, args) => {
     const observation = await ctx.db
       .query("dollarMetrics")
-      .withIndex("by_metric_and_observation_date", (q) => q.eq("metric", args.metric))
+      .withIndex("by_metric_and_observation_date_key", (q) => q.eq("metric", args.metric))
       .order("desc")
       .first();
     if (observation === null) {

@@ -6,7 +6,7 @@ The Convex schema is a provenance-first research boundary. It stores source obse
 
 Historical dates carry an explicit `year`, `month`, or `day` precision. A missing month or day means the source did not establish that precision. It is not silently converted to January 1.
 
-`dateKey` exists only on timeline events to provide chronological index ordering while retaining the original precision object. Currency lifespan is never stored as editable truth. Consumers derive it from `startDate`, `endDate`, an explicit as-of date for active currencies, and a versioned rounding/inclusion methodology.
+`dateKey` fields exist on timeline events and metric observations only to provide chronological index ordering while retaining the original precision object. Currency chronology validation treats imprecise dates as intervals: it rejects only a definitely inverted end interval and does not reject two intervals that could overlap. Currency lifespan is never stored as editable truth. Consumers derive it from `startDate`, `endDate`, an explicit as-of date for active currencies, and a versioned rounding/inclusion methodology.
 
 The current date contract supports years 1–9999. Earlier historical eras require a separately reviewed extension rather than negative-year guesswork.
 
@@ -16,7 +16,7 @@ The current date contract supports years 1–9999. Earlier historical eras requi
 - `currencyType` distinguishes fiat, commodity-backed, union, colonial, transitional, and other systems. It prevents fiat-specific conclusions from being applied to unlike systems.
 - `primaryFailureCause` is optional. `failureCauses` can contain multiple supported contributing classifications. Absence means unclassified, not “none.”
 - `recordState` is either `development_fixture` or `verified`. Verified currencies and events require at least one source. Development fixtures must remain visibly identified by consumers.
-- Metrics exist only when an observation exists. Query contracts return `null` when an observation or optional field is unavailable; they never coerce missing data to zero.
+- Metrics exist only when an observation exists. Their observation dates carry the same year/month/day precision as historical records, and values must be finite numbers. Query contracts return `null` when an observation or optional field is unavailable; they never coerce missing data to zero or invent calendar precision.
 
 ## Provenance and references
 

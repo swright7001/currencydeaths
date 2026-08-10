@@ -78,7 +78,8 @@ export default defineSchema({
   currencyMetrics: defineTable({
     currencyId: v.id("currencies"),
     metric: v.string(),
-    observationDate: v.string(),
+    observationDate: historicalDateValidator,
+    observationDateKey: v.number(),
     value: v.number(),
     unit: v.string(),
     sourceId: v.id("sources"),
@@ -86,15 +87,16 @@ export default defineSchema({
     recordState: recordStateValidator,
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_currency_id_and_metric_and_observation_date", [
+  }).index("by_currency_id_and_metric_and_observation_date_key", [
     "currencyId",
     "metric",
-    "observationDate",
+    "observationDateKey",
   ]),
 
   dollarMetrics: defineTable({
     metric: v.string(),
-    observationDate: v.string(),
+    observationDate: historicalDateValidator,
+    observationDateKey: v.number(),
     value: v.number(),
     unit: v.string(),
     sourceId: v.id("sources"),
@@ -102,7 +104,7 @@ export default defineSchema({
     recordState: recordStateValidator,
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_metric_and_observation_date", ["metric", "observationDate"]),
+  }).index("by_metric_and_observation_date_key", ["metric", "observationDateKey"]),
 
   methodologies: defineTable({
     name: v.string(),

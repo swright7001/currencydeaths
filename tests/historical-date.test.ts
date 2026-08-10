@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { historicalDateToKey } from "../lib/data/historical-date";
+import {
+  historicalDateToBounds,
+  historicalDateToKey,
+} from "../lib/data/historical-date";
 
 describe("historicalDateToKey", () => {
   it("preserves documented date precision", () => {
@@ -18,5 +21,16 @@ describe("historicalDateToKey", () => {
     expect(() =>
       historicalDateToKey({ year: 2023, month: 2, day: 29, precision: "day" }),
     ).toThrow("not a valid calendar date");
+  });
+
+  it("expresses uncertain dates as intervals", () => {
+    expect(historicalDateToBounds({ year: 1990, precision: "year" })).toEqual({
+      earliestKey: 19_900_101,
+      latestKey: 19_901_231,
+    });
+    expect(historicalDateToBounds({ year: 2000, month: 2, precision: "month" })).toEqual({
+      earliestKey: 20_000_201,
+      latestKey: 20_000_229,
+    });
   });
 });

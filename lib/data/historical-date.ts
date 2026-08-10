@@ -7,6 +7,11 @@ export type HistoricalDate = Readonly<{
   precision: HistoricalDatePrecision;
 }>;
 
+export type HistoricalDateBounds = Readonly<{
+  earliestKey: number;
+  latestKey: number;
+}>;
+
 function isIntegerInRange(value: number, minimum: number, maximum: number) {
   return Number.isInteger(value) && value >= minimum && value <= maximum;
 }
@@ -52,4 +57,27 @@ export function historicalDateToKey(date: HistoricalDate): number {
   }
 
   return date.year * 10_000 + date.month * 100 + date.day;
+}
+
+export function historicalDateToBounds(date: HistoricalDate): HistoricalDateBounds {
+  historicalDateToKey(date);
+
+  if (date.precision === "year") {
+    return {
+      earliestKey: date.year * 10_000 + 101,
+      latestKey: date.year * 10_000 + 1231,
+    };
+  }
+
+  if (date.precision === "month") {
+    const month = date.month!;
+    const finalDay = new Date(Date.UTC(date.year, month, 0)).getUTCDate();
+    return {
+      earliestKey: date.year * 10_000 + month * 100 + 1,
+      latestKey: date.year * 10_000 + month * 100 + finalDay,
+    };
+  }
+
+  const exactKey = date.year * 10_000 + date.month! * 100 + date.day!;
+  return { earliestKey: exactKey, latestKey: exactKey };
 }

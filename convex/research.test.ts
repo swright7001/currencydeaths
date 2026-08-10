@@ -110,7 +110,7 @@ describe("monetary-history storage contracts", () => {
     await t.mutation(internal.research.createCurrencyMetric, {
       currencyId,
       metric: "peak_inflation",
-      observationDate: "1923-11-01",
+      observationDate: { year: 1923, month: 11, precision: "month" },
       value: 42,
       unit: "fixture_percent",
       sourceId,
@@ -124,6 +124,7 @@ describe("monetary-history storage contracts", () => {
       }),
     ).toMatchObject({
       value: 42,
+      observationDate: { year: 1923, month: 11, precision: "month" },
       notes: null,
       source: { id: sourceId, url: sourceArgs.url },
     });
@@ -131,7 +132,7 @@ describe("monetary-history storage contracts", () => {
     expect(await t.query(api.research.getLatestDollarMetric, { metric: "m2" })).toBeNull();
     await t.mutation(internal.research.createDollarMetric, {
       metric: "m2",
-      observationDate: "2026-07-01",
+      observationDate: { year: 2026, month: 7, precision: "month" },
       value: 1,
       unit: "fixture_index",
       sourceId,
@@ -139,8 +140,71 @@ describe("monetary-history storage contracts", () => {
     });
     expect(await t.query(api.research.getLatestDollarMetric, { metric: "m2" })).toMatchObject({
       value: 1,
+      observationDate: { year: 2026, month: 7, precision: "month" },
       notes: null,
       source: { id: sourceId },
     });
+  });
+
+  it("uses date intervals for chronology and rejects non-finite metrics", async () => {
+    const t = convexTest(schema, modules);
+    const sourceId = await t.mutation(internal.research.createSource, sourceArgs);
+    const countryId = await t.mutation(internal.research.createCountry, {
+      name: "Fixture Republic",
+      slug: "fixture-republic",
+      region: "europe",
+    });
+
+    const currencyId = await t.mutation(internal.research.createCurrency, {
+      name: "Overlap Fixture",
+      slug: "overlap-fixture",
+      countryId,
+      currencyType: "fiat",
+      status: "historical",
+      startDate: { year: 1990, month: 6, day: 1, precision: "day" },
+      endDate: { year: 1990, precision: "year" },
+      failureCauses: [],
+      sourceIds: [sourceId],
+      recordState: "development_fixture",
+    });
+    expect(currencyId).toBeTruthy();
+
+    await expect(
+      t.mutation(internal.research.createCurrency, {
+        name: "Inverted Fixture",
+        slug: "inverted-fixture",
+        countryId,
+        currencyType: "fiat",
+        status: "historical",
+        startDate: { year: 1991, precision: "year" },
+        endDate: { year: 1990, precision: "year" },
+        failureCauses: [],
+        sourceIds: [sourceId],
+        recordState: "development_fixture",
+      }),
+    ).rejects.toThrow("end date cannot precede");
+
+    await expect(
+      t.mutation(internal.research.createCurrencyMetric, {
+        currencyId,
+        metric: "invalid_metric",
+        observationDate: { year: 1990, precision: "year" },
+        value: Number.POSITIVE_INFINITY,
+        unit: "fixture",
+        sourceId,
+        recordState: "development_fixture",
+      }),
+    ).rejects.toThrow("Metric value must be a finite number");
+
+    await expect(
+      t.mutation(internal.research.createDollarMetric, {
+        metric: "invalid_metric",
+        observationDate: { year: 1990, precision: "year" },
+        value: Number.NaN,
+        unit: "fixture",
+        sourceId,
+        recordState: "development_fixture",
+      }),
+    ).rejects.toThrow("Metric value must be a finite number");
   });
 });
