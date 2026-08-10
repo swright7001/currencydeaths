@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Roboto_Condensed } from "next/font/google";
 import type { ReactNode } from "react";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import { ConvexClientProvider } from "./convex-client-provider";
 import { getOptionalConvexUrl } from "@/lib/env/convex";
 import "./globals.css";
@@ -19,6 +21,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const display = Roboto_Condensed({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: "variable",
+});
+
 export const metadata: Metadata = {
   title: "CurrencyDeaths",
   description:
@@ -31,11 +39,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body>
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
         <ConvexClientProvider url={convexUrl}>
-          {children}
+          <div className="site-frame">
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </div>
         </ConvexClientProvider>
       </body>
     </html>
