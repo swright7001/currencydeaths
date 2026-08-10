@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import type { ReactNode } from "react";
+import { ConvexClientProvider } from "./convex-client-provider";
+import { getOptionalConvexUrl } from "@/lib/env/convex";
 import "./globals.css";
+
+type RootLayoutProps = Readonly<{
+  children: ReactNode;
+}>;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,13 +25,19 @@ export const metadata: Metadata = {
     "An educational monetary-history and purchasing-power research project.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: RootLayoutProps) {
+  const convexUrl = getOptionalConvexUrl(process.env.NEXT_PUBLIC_CONVEX_URL);
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ConvexClientProvider url={convexUrl}>
+          {children}
+        </ConvexClientProvider>
+      </body>
     </html>
   );
 }
