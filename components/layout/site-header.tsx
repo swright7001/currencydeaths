@@ -36,7 +36,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="build-plate" aria-label="Current release status">
+        <div className="build-plate">
           <span>Research build</span>
           <strong>Archive / 01</strong>
         </div>

@@ -11,14 +11,14 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <div className="site-footer__index" aria-label="Project information">
+        <div className="site-footer__index">
           <span>Independent monetary research</span>
           <span>Educational use</span>
           <span>No live claims in this release</span>
         </div>
 
         <div className="site-footer__legal">
-          <Link href="/methodology">Methodology</Link>
+          <Link href="/methodology/dollar-stress-score">Methodology</Link>
           <span>© {new Date().getFullYear()} CurrencyDeaths</span>
         </div>
       </div>

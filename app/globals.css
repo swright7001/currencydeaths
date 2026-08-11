@@ -2437,6 +2437,420 @@ summary {
   }
 }
 
+/* Dollar stress methodology */
+.stress-methodology-page {
+  flex: 1;
+}
+
+.stress-methodology-hero {
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+  background:
+    linear-gradient(90deg, transparent 49.95%, rgb(255 255 255 / 3%) 50%, transparent 50.05%),
+    radial-gradient(circle at 78% 38%, rgb(228 56 34 / 13%), transparent 24rem);
+}
+
+.stress-methodology-hero::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  width: 55%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-signal), transparent);
+  content: "";
+}
+
+.stress-methodology-hero__grid {
+  display: grid;
+  min-height: 32rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.75fr);
+  align-items: center;
+  gap: clamp(2rem, 7vw, 7rem);
+  padding-block: clamp(4rem, 9vw, 7rem);
+}
+
+.stress-methodology-hero h1,
+.stress-methodology-section h2,
+.stress-methodology-formula h2,
+.stress-methodology-policy h2,
+.stress-methodology-history h2 {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-stretch: condensed;
+  font-weight: 760;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.stress-methodology-hero h1 {
+  max-width: 9ch;
+  font-size: clamp(4rem, 8vw, 7.5rem);
+}
+
+.stress-methodology-hero__grid > div > p:last-child {
+  max-width: 43rem;
+  margin: var(--space-8) 0 0;
+  color: var(--color-text-secondary);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.65;
+}
+
+.stress-methodology-hero aside {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-top-color: var(--color-signal);
+  background: linear-gradient(145deg, rgb(17 21 22 / 96%), rgb(9 12 13 / 92%));
+}
+
+.stress-methodology-hero aside::before {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-top: 1px solid var(--color-signal-bright);
+  border-left: 1px solid var(--color-signal-bright);
+  content: "";
+}
+
+.stress-methodology-hero aside > span {
+  display: block;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-fixture);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stress-methodology-hero dl {
+  margin: 0;
+  padding: var(--space-3) var(--space-6);
+}
+
+.stress-methodology-hero dl > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid rgb(37 43 45 / 72%);
+}
+
+.stress-methodology-hero dt,
+.stress-methodology-hero dd {
+  margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.65rem;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.stress-methodology-hero dt {
+  color: var(--color-text-secondary);
+}
+
+.stress-methodology-hero dd {
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.stress-methodology-formula {
+  display: grid;
+  grid-template-columns: 0.7fr 1.2fr 1fr;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+  padding-block: clamp(4rem, 8vw, 7rem);
+}
+
+.stress-methodology-formula h2,
+.stress-methodology-section h2,
+.stress-methodology-policy h2,
+.stress-methodology-history h2 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.stress-methodology-formula > p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.stress-methodology-formula > .metric-numerals {
+  padding: var(--space-8);
+  border: 1px solid rgb(228 56 34 / 45%);
+  background: rgb(228 56 34 / 5%);
+  color: var(--color-signal-bright);
+  font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+  letter-spacing: 0.035em;
+  text-align: center;
+}
+
+.stress-methodology-section {
+  padding-block: clamp(4rem, 8vw, 7rem);
+  border-top: 1px solid var(--color-border);
+}
+
+.stress-methodology-section > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin-bottom: var(--space-12);
+}
+
+.stress-methodology-section > header > p {
+  max-width: 28rem;
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.stress-component-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.stress-component-grid article {
+  position: relative;
+  min-width: 0;
+  padding: var(--space-8);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-top-color: rgb(228 56 34 / 58%);
+  background: linear-gradient(145deg, rgb(17 21 22 / 96%), rgb(9 12 13 / 92%));
+}
+
+.stress-component-index {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  color: rgb(228 56 34 / 22%);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stress-component-grid article > p:first-of-type,
+.stress-methodology-policy article > span {
+  margin: 0;
+  color: var(--color-signal-bright);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.stress-component-grid h3,
+.stress-methodology-policy h3 {
+  max-width: 14ch;
+  margin: var(--space-4) 0 var(--space-8);
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.stress-component-grid dl {
+  margin: 0;
+}
+
+.stress-component-grid dl > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.stress-component-grid dt,
+.stress-component-grid dd {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.stress-component-grid dd {
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.stress-component-grid article > p:last-of-type {
+  min-height: 6.4rem;
+  margin: var(--space-6) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.stress-component-grid a,
+.stress-methodology-history > a {
+  display: inline-block;
+  margin-top: var(--space-6);
+  color: var(--color-signal-bright);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 680;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stress-component-grid a:hover,
+.stress-methodology-history > a:hover {
+  color: var(--color-text-primary);
+}
+
+.stress-methodology-policy {
+  border-block: 1px solid var(--color-border);
+  background: rgb(13 16 17 / 76%);
+}
+
+.stress-methodology-policy__grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1fr 1fr;
+  gap: var(--space-4);
+  padding-block: clamp(4rem, 8vw, 7rem);
+}
+
+.stress-methodology-policy article {
+  padding: var(--space-8);
+  border-left: 1px solid var(--color-border);
+}
+
+.stress-methodology-policy article p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.stress-limit-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  counter-reset: limit;
+  list-style: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.stress-limit-list li {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  counter-increment: limit;
+}
+
+.stress-limit-list li::before {
+  color: var(--color-signal);
+  font-family: var(--font-geist-mono), monospace;
+  content: "0" counter(limit);
+}
+
+.stress-methodology-history {
+  display: grid;
+  grid-template-columns: 0.8fr 1.4fr;
+  gap: var(--space-12);
+  padding-block: clamp(4rem, 8vw, 7rem);
+  border-top: 1px solid var(--color-border);
+}
+
+.stress-methodology-history article {
+  display: grid;
+  grid-template-columns: 8rem minmax(12rem, 0.65fr) 1fr;
+  gap: var(--space-6);
+  align-items: baseline;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+}
+
+.stress-methodology-history time,
+.stress-methodology-history strong {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+}
+
+.stress-methodology-history time {
+  color: var(--color-text-muted);
+}
+
+.stress-methodology-history strong {
+  color: var(--color-fixture);
+}
+
+.stress-methodology-history article p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.stress-methodology-history > a {
+  grid-column: 2;
+  margin-top: 0;
+}
+
+@media (max-width: 64rem) {
+  .stress-methodology-hero__grid,
+  .stress-methodology-formula,
+  .stress-methodology-policy__grid,
+  .stress-methodology-history {
+    grid-template-columns: 1fr;
+  }
+
+  .stress-component-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stress-methodology-policy article {
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+
+  .stress-methodology-history > a {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 46rem) {
+  .stress-methodology-hero__grid {
+    min-height: 0;
+    padding-block: 3.5rem;
+  }
+
+  .stress-methodology-hero h1 {
+    font-size: clamp(3.5rem, 17vw, 5rem);
+  }
+
+  .stress-methodology-section > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stress-component-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stress-component-grid article > p:last-of-type {
+    min-height: 0;
+  }
+
+  .stress-methodology-history article {
+    grid-template-columns: 1fr;
+  }
+
+  .stress-limit-list li {
+    grid-template-columns: 2.25rem 1fr;
+  }
+}
+
 @media (max-width: 46rem) {
   .currency-detail-hero > .shell-container {
     padding-block: 2rem 4rem;
