@@ -110,7 +110,10 @@ function lifespanBand(minimum: number, maximum: number): LifespanBand | null {
 }
 
 function searchable(value: string) {
-  return value.normalize("NFKD").toLocaleLowerCase();
+  return value
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .toLocaleLowerCase();
 }
 
 export const currencyArchiveRecords = verifiedCurrencySeed.currencies.map(

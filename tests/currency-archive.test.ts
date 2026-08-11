@@ -49,6 +49,13 @@ describe("currency archive query", () => {
     ]);
   });
 
+  it("matches unaccented queries against accented currency names", () => {
+    const query = parseArchiveQuery({ q: "bolivar" });
+    expect(filterCurrencyArchive(query).map((record) => record.slug)).toEqual([
+      "venezuelan-bolivar-fuerte",
+    ]);
+  });
+
   it("uses transition era and unambiguous derived lifespan bands", () => {
     const query = parseArchiveQuery({ era: "2000_present", lifespan: "10_29" });
     expect(filterCurrencyArchive(query).map((record) => record.slug)).toEqual([
