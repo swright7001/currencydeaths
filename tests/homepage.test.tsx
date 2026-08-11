@@ -21,6 +21,19 @@ describe("cinematic homepage shell", () => {
     expect(html).toContain("No outcome asserted");
   });
 
+  it("labels provocative framing as interpretation instead of a universal finding", () => {
+    expect(html).toContain("Editorial thesis / interpretation");
+    expect(html).toContain(
+      "This headline is an editorial thesis, not a universal empirical finding",
+    );
+  });
+
+  it("separates a currency outcome from the system that followed it", () => {
+    expect(html).toContain("collapsed; followed by: Multicurrency system");
+    expect(html).toContain("replaced; successor: Rentenmark");
+    expect(html).not.toContain("collapsed by");
+  });
+
   it("renders each verified currency record without invented peak metrics", () => {
     expect((html.match(/Research page planned/g) ?? [])).toHaveLength(5);
     expect(html).toContain("German paper mark (Papiermark)");

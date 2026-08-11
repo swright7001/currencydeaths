@@ -26,6 +26,13 @@ function displayLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function describeOutcome(status: string, successor: string) {
+  const statusLabel = displayLabel(status);
+  const relationship = status === "collapsed" ? "followed by" : "successor";
+
+  return `${statusLabel}; ${relationship}: ${successor}`;
+}
+
 const currencyCards = verifiedCurrencySeed.currencies.map((currency) => ({
   name: currency.name,
   slug: currency.slug,
@@ -50,7 +57,10 @@ const comparisonRows: readonly ComparisonRow[] = [
     period: `${displayYear(currency.startDate)}—${displayYear(currency.endDate)}`,
     evidence: "sourced" as const,
     event: displayLabel(currency.primaryFailureCause),
-    outcome: `${displayLabel(currency.status)} by ${currency.replacementCurrencyName}`,
+    outcome: describeOutcome(
+      currency.status,
+      currency.replacementCurrencyName,
+    ),
   })),
 ];
 
@@ -60,14 +70,15 @@ export default function Home() {
       <section className="homepage-hero">
         <div className="shell-container homepage-hero__grid">
           <div className="homepage-hero__copy">
-            <p className="section-kicker">Monetary history / purchasing power</p>
+            <p className="section-kicker">Editorial thesis / interpretation</p>
             <h1>
               No fiat currency
               <span>lasts forever.</span>
             </h1>
             <p className="homepage-hero__lede">
-              Every monetary system leaves a record. Study what changed them.
-              Track the warning signs without confusing a model for a prophecy.
+              This headline is an editorial thesis, not a universal empirical
+              finding. Study monetary history and track warning signs without
+              confusing a model for a prophecy.
             </p>
             <div className="homepage-hero__actions">
               <Link href="#past-deaths">Explore verified cases</Link>
