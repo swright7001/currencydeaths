@@ -105,11 +105,11 @@ const observations = [
     { year: 2026, month: 6, value: 332.568 },
   ]),
   ...[
-    { year: 2025, month: 3, value: 120.54515 },
-    { year: 2025, month: 6, value: 118.78171 },
-    { year: 2025, month: 9, value: 121.02875 },
-    { year: 2025, month: 12, value: 122.56815 },
-    { year: 2026, month: 3, value: 122.59387 },
+    { year: 2025, month: 1, value: 120.54515 },
+    { year: 2025, month: 4, value: 118.78171 },
+    { year: 2025, month: 7, value: 121.02875 },
+    { year: 2025, month: 10, value: 122.56815 },
+    { year: 2026, month: 1, value: 122.59387 },
   ].map(
     ({ year, month, value }): DollarMetricFixtureObservation => ({
       metric: "federal_debt_to_gdp",
@@ -121,7 +121,7 @@ const observations = [
       sourceSeriesId: debtSource.sourceSeriesId,
       sourceUpdatedAt: debtSource.sourceUpdatedAt,
       notes:
-        "Development fixture copied from the cited FRED series display; quarter-end month preserves the source frequency without inventing a day.",
+        "Development fixture copied from the cited FRED series; first month preserves FRED's quarter observation date without inventing a day.",
     }),
   ),
 ] as const;

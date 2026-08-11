@@ -7,6 +7,8 @@ import {
   assertDollarMetricFixtureIntegrity,
   dollarMetricFixtures,
   DOLLAR_METRIC_FIXTURE_VERSION,
+  type DollarMetricFixtureObservation,
+  type DollarMetricFixtureSource,
 } from "../lib/data/dollar-metric-fixtures";
 import { historicalDateToKey } from "../lib/data/historical-date";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -94,6 +96,61 @@ function requireCompleteObservation(
   ) {
     throw new ConvexError(
       "Dollar metric observation predates the provenance contract and cannot be returned.",
+    );
+  }
+}
+
+function historicalDatesMatch(
+  left: Doc<"dollarMetrics">["observationDate"],
+  right: DollarMetricFixtureObservation["observationDate"],
+) {
+  return (
+    left.year === right.year &&
+    left.month === right.month &&
+    left.day === right.day &&
+    left.precision === right.precision
+  );
+}
+
+function requireStoredSourceMatches(
+  stored: Doc<"sources">,
+  expected: DollarMetricFixtureSource,
+) {
+  if (
+    stored.seedVersion !== DOLLAR_METRIC_FIXTURE_VERSION ||
+    stored.title !== expected.title ||
+    stored.publisher !== expected.publisher ||
+    stored.url !== expected.url ||
+    stored.publicationDate !== undefined ||
+    stored.accessedAt !== dollarMetricFixtures.accessedAt ||
+    stored.sourceType !== expected.sourceType
+  ) {
+    throw new ConvexError(`Fixture source conflicts with stored data: ${expected.url}.`);
+  }
+}
+
+function requireStoredObservationMatches(
+  stored: Doc<"dollarMetrics">,
+  expected: DollarMetricFixtureObservation,
+  sourceId: Id<"sources">,
+) {
+  const observationDateKey = historicalDateToKey(expected.observationDate);
+  if (
+    stored.fixtureBatchVersion !== DOLLAR_METRIC_FIXTURE_VERSION ||
+    stored.metric !== expected.metric ||
+    !historicalDatesMatch(stored.observationDate, expected.observationDate) ||
+    stored.observationDateKey !== observationDateKey ||
+    stored.value !== expected.value ||
+    stored.unit !== expected.unit ||
+    stored.frequency !== expected.frequency ||
+    stored.sourceSeriesId !== expected.sourceSeriesId ||
+    stored.sourceUpdatedAt !== expected.sourceUpdatedAt ||
+    stored.sourceId !== sourceId ||
+    stored.notes !== expected.notes ||
+    stored.recordState !== "development_fixture"
+  ) {
+    throw new ConvexError(
+      `Fixture observation conflicts with stored data: ${expected.metric} ${observationDateKey}.`,
     );
   }
 }
@@ -206,9 +263,7 @@ export const applyDevelopmentFixtures = internalMutation({
         .withIndex("by_url", (q) => q.eq("url", source.url))
         .unique();
       if (stored !== null) {
-        if (stored.seedVersion !== DOLLAR_METRIC_FIXTURE_VERSION) {
-          throw new ConvexError(`Fixture source URL is owned by another record: ${source.url}.`);
-        }
+        requireStoredSourceMatches(stored, source);
         sourceIds.set(source.key, stored._id);
         existing.sources += 1;
         continue;
@@ -240,20 +295,7 @@ export const applyDevelopmentFixtures = internalMutation({
         )
         .unique();
       if (stored !== null) {
-        if (
-          stored.fixtureBatchVersion !== DOLLAR_METRIC_FIXTURE_VERSION ||
-          stored.value !== observation.value ||
-          stored.unit !== observation.unit ||
-          stored.frequency !== observation.frequency ||
-          stored.sourceSeriesId !== observation.sourceSeriesId ||
-          stored.sourceUpdatedAt !== observation.sourceUpdatedAt ||
-          stored.sourceId !== sourceId ||
-          stored.recordState !== "development_fixture"
-        ) {
-          throw new ConvexError(
-            `Fixture observation conflicts with stored data: ${observation.metric} ${observationDateKey}.`,
-          );
-        }
+        requireStoredObservationMatches(stored, observation, sourceId);
         existing.observations += 1;
         continue;
       }
@@ -284,12 +326,26 @@ export const removeDevelopmentFixtures = internalMutation({
   args: { version: fixtureVersionValidator },
   returns: v.object({ version: fixtureVersionValidator, removedObservations: v.number() }),
   handler: async (ctx) => {
+    assertDollarMetricFixtureIntegrity();
+    const sourceIds = new Map<string, Id<"sources">>();
+    for (const source of dollarMetricFixtures.sources) {
+      const stored = await ctx.db
+        .query("sources")
+        .withIndex("by_url", (q) => q.eq("url", source.url))
+        .unique();
+      if (stored === null) {
+        throw new ConvexError(`Fixture source is missing; removal aborted: ${source.url}.`);
+      }
+      requireStoredSourceMatches(stored, source);
+      sourceIds.set(source.key, stored._id);
+    }
+
     const expectedCount = dollarMetricFixtures.observations.length;
-    const expectedIdentities = new Set(
-      dollarMetricFixtures.observations.map(
-        (observation) =>
-          `${observation.metric}:${historicalDateToKey(observation.observationDate)}`,
-      ),
+    const expectedByIdentity = new Map(
+      dollarMetricFixtures.observations.map((observation) => [
+        `${observation.metric}:${historicalDateToKey(observation.observationDate)}`,
+        observation,
+      ]),
     );
     const observations = await ctx.db
       .query("dollarMetrics")
@@ -300,13 +356,16 @@ export const removeDevelopmentFixtures = internalMutation({
     if (observations.length > expectedCount) {
       throw new ConvexError("Fixture batch contains unexpected observations; removal aborted.");
     }
-    if (
-      observations.some(
-        (observation) =>
-          !expectedIdentities.has(`${observation.metric}:${observation.observationDateKey}`),
-      )
-    ) {
-      throw new ConvexError("Fixture batch contains an unknown observation; removal aborted.");
+    for (const stored of observations) {
+      const expected = expectedByIdentity.get(`${stored.metric}:${stored.observationDateKey}`);
+      if (expected === undefined) {
+        throw new ConvexError("Fixture batch contains an unknown observation; removal aborted.");
+      }
+      const sourceId = sourceIds.get(expected.sourceKey);
+      if (sourceId === undefined) {
+        throw new ConvexError(`Fixture source was not resolved: ${expected.sourceKey}.`);
+      }
+      requireStoredObservationMatches(stored, expected, sourceId);
     }
     for (const observation of observations) await ctx.db.delete(observation._id);
     return { version: DOLLAR_METRIC_FIXTURE_VERSION, removedObservations: observations.length };

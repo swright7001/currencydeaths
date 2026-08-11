@@ -402,39 +402,3 @@ export const getLatestCurrencyMetric = query({
     };
   },
 });
-
-export const getLatestDollarMetric = query({
-  args: { metric: dollarMetricKeyValidator },
-  returns: v.union(v.null(), metricWithSourceValidator),
-  handler: async (ctx, args) => {
-    const observation = await ctx.db
-      .query("dollarMetrics")
-      .withIndex("by_metric_and_observation_date_key", (q) => q.eq("metric", args.metric))
-      .order("desc")
-      .first();
-    if (observation === null) {
-      return null;
-    }
-    const source = await ctx.db.get(observation.sourceId);
-    if (source === null) {
-      throw new ConvexError("Metric source reference is invalid.");
-    }
-    return {
-      metric: observation.metric,
-      observationDate: observation.observationDate,
-      value: observation.value,
-      unit: observation.unit,
-      notes: observation.notes ?? null,
-      recordState: observation.recordState,
-      source: {
-        id: source._id,
-        title: source.title,
-        publisher: source.publisher,
-        url: source.url,
-        publicationDate: source.publicationDate ?? null,
-        accessedAt: source.accessedAt,
-        sourceType: source.sourceType,
-      },
-    };
-  },
-});

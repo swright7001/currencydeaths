@@ -22,6 +22,17 @@ describe("dollar metric contracts", () => {
         observation.notes.includes("Development fixture"),
       ),
     ).toBe(true);
+    expect(
+      dollarMetricFixtures.observations
+        .filter((observation) => observation.metric === "federal_debt_to_gdp")
+        .map(({ observationDate }) => [observationDate.year, observationDate.month]),
+    ).toEqual([
+      [2025, 1],
+      [2025, 4],
+      [2025, 7],
+      [2025, 10],
+      [2026, 1],
+    ]);
   });
 
   it("rejects unit, frequency, and series mismatches", () => {

@@ -1,6 +1,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
@@ -122,7 +123,40 @@ describe("dollar metric fixtures and query contracts", () => {
     ).rejects.toThrow("Metric cpi requires unit");
   });
 
-  it("refuses to bless altered or unknown records as fixture-owned", async () => {
+  it("refuses to bless altered observations or sources as fixture-owned", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version });
+    let m2Id: Id<"dollarMetrics"> | undefined;
+    await t.run(async (ctx) => {
+      const m2 = await ctx.db
+        .query("dollarMetrics")
+        .withIndex("by_metric_and_observation_date_key", (q) => q.eq("metric", "m2"))
+        .order("desc")
+        .first();
+      if (m2 === null) throw new Error("fixture observation missing");
+      m2Id = m2._id;
+      await ctx.db.patch(m2._id, { value: -1 });
+    });
+    await expect(
+      t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version }),
+    ).rejects.toThrow("conflicts with stored data");
+
+    await t.run(async (ctx) => {
+      if (m2Id === undefined) throw new Error("fixture observation id missing");
+      await ctx.db.patch(m2Id, { value: 23_155.2 });
+      const source = await ctx.db
+        .query("sources")
+        .withIndex("by_url", (q) => q.eq("url", "https://fred.stlouisfed.org/series/M2SL"))
+        .unique();
+      if (source === null) throw new Error("fixture source missing");
+      await ctx.db.patch(source._id, { publisher: "Altered publisher" });
+    });
+    await expect(
+      t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version }),
+    ).rejects.toThrow("Fixture source conflicts with stored data");
+  });
+
+  it("aborts removal when a known fixture observation was altered", async () => {
     const t = convexTest(schema, modules);
     await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version });
     await t.run(async (ctx) => {
@@ -132,11 +166,16 @@ describe("dollar metric fixtures and query contracts", () => {
         .order("desc")
         .first();
       if (m2 === null) throw new Error("fixture observation missing");
-      await ctx.db.patch(m2._id, { value: -1 });
+      await ctx.db.patch(m2._id, { notes: "Altered fixture note" });
     });
     await expect(
-      t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version }),
-    ).rejects.toThrow("conflicts with stored data");
+      t.mutation(internal.dollarMetrics.removeDevelopmentFixtures, { version }),
+    ).rejects.toThrow("Fixture observation conflicts with stored data");
+  });
+
+  it("aborts removal when a fixture batch contains an unknown observation", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version });
 
     await t.run(async (ctx) => {
       const source = await ctx.db
