@@ -15,6 +15,8 @@ export function assertIsoCalendarDate(value: string, label: string) {
   ) {
     throw new Error(`${label} must be a real calendar date.`);
   }
+
+  return parsed.getTime();
 }
 
 export function isOneYearApart(prior: string, current: string) {

@@ -79,13 +79,14 @@ function round(value: number, precision: number) {
 }
 
 function validateProvenanceTimes(
+  observationTimestamp: number,
   sourceUpdatedAt: number,
   accessedAt: number,
   componentId: DollarStressComponentId,
 ) {
   if (
     !Number.isFinite(sourceUpdatedAt) ||
-    sourceUpdatedAt <= 0 ||
+    sourceUpdatedAt < observationTimestamp ||
     !Number.isFinite(accessedAt) ||
     accessedAt < sourceUpdatedAt
   ) {
@@ -108,8 +109,12 @@ function deriveComponentValue(
   }
 
   if (input.input.kind === "direct") {
-    assertIsoCalendarDate(input.input.observationDate, "Stress input observation date");
+    const observationTimestamp = assertIsoCalendarDate(
+      input.input.observationDate,
+      "Stress input observation date",
+    );
     validateProvenanceTimes(
+      observationTimestamp,
       input.input.sourceUpdatedAt,
       input.input.accessedAt,
       input.componentId,
@@ -127,10 +132,26 @@ function deriveComponentValue(
   }
 
   const { current, priorYear } = input.input;
-  assertIsoCalendarDate(current.observationDate, "Current observation date");
-  assertIsoCalendarDate(priorYear.observationDate, "Prior-year observation date");
-  validateProvenanceTimes(current.sourceUpdatedAt, current.accessedAt, input.componentId);
-  validateProvenanceTimes(priorYear.sourceUpdatedAt, priorYear.accessedAt, input.componentId);
+  const currentTimestamp = assertIsoCalendarDate(
+    current.observationDate,
+    "Current observation date",
+  );
+  const priorYearTimestamp = assertIsoCalendarDate(
+    priorYear.observationDate,
+    "Prior-year observation date",
+  );
+  validateProvenanceTimes(
+    currentTimestamp,
+    current.sourceUpdatedAt,
+    current.accessedAt,
+    input.componentId,
+  );
+  validateProvenanceTimes(
+    priorYearTimestamp,
+    priorYear.sourceUpdatedAt,
+    priorYear.accessedAt,
+    input.componentId,
+  );
   if (!isOneYearApart(priorYear.observationDate, current.observationDate)) {
     throw new Error(
       `Component ${input.componentId} requires observations exactly one year apart.`,

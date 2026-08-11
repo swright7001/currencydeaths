@@ -163,6 +163,9 @@ export function validateDollarStressMethodology(
   if (methodology.components.length === 0) {
     throw new Error("Methodology requires at least one component.");
   }
+  if (methodology.components.length !== dollarStressComponentIds.length) {
+    throw new Error("Methodology must contain the exact approved component set.");
+  }
 
   const ids = new Set<DollarStressComponentId>();
   let weightTotal = 0;
@@ -195,6 +198,10 @@ export function validateDollarStressMethodology(
       throw new Error(`Component ${component.id} violates its approved identity contract.`);
     }
     weightTotal += component.weight;
+  }
+
+  if (dollarStressComponentIds.some((componentId) => !ids.has(componentId))) {
+    throw new Error("Methodology must contain the exact approved component set.");
   }
 
   if (Math.abs(weightTotal - 1) > 1e-9) {

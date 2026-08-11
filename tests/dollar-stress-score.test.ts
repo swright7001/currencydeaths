@@ -6,6 +6,7 @@ import {
 import {
   experimentalDollarStressMethodology,
   validateDollarStressMethodology,
+  type DollarStressMethodology,
 } from "../lib/methodology/dollar-stress-score";
 
 const completeInputs = [
@@ -181,6 +182,15 @@ describe("dollar stress score", () => {
         ),
       }),
     ).toThrow("violates its approved identity contract");
+
+    expect(() =>
+      validateDollarStressMethodology({
+        ...experimentalDollarStressMethodology,
+        components: experimentalDollarStressMethodology.components
+          .slice(0, 2)
+          .map((component) => ({ ...component, weight: 0.5 })),
+      } as unknown as DollarStressMethodology),
+    ).toThrow("exact approved component set");
     expect(() =>
       validateDollarStressMethodology({
         ...experimentalDollarStressMethodology,
@@ -263,6 +273,20 @@ describe("dollar stress score", () => {
             ...completeInputs[2].input,
             sourceUpdatedAt: Date.UTC(2026, 7, 12),
             accessedAt: Date.UTC(2026, 7, 11),
+          },
+        },
+      ]),
+    ).toThrow("invalid source provenance times");
+
+    expect(() =>
+      calculateDollarStressScore(experimentalDollarStressMethodology, [
+        completeInputs[0],
+        completeInputs[1],
+        {
+          ...completeInputs[2],
+          input: {
+            ...completeInputs[2].input,
+            observationDate: "2027-01-01",
           },
         },
       ]),
