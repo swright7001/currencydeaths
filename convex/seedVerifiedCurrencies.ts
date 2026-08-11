@@ -155,6 +155,34 @@ export const remove = internalMutation({
     ) {
       throw new ConvexError("Seed namespace contains unexpected records; removal aborted.");
     }
+    const [allCurrencies, allSources, allCountries, event, currencyMetric, dollarMetric, methodology, subscriber] =
+      await Promise.all([
+        ctx.db.query("currencies").take(verifiedCurrencySeed.currencies.length + 1),
+        ctx.db.query("sources").take(verifiedCurrencySeed.sources.length + 1),
+        ctx.db.query("countries").take(verifiedCurrencySeed.countries.length + 1),
+        ctx.db.query("currencyEvents").first(),
+        ctx.db.query("currencyMetrics").first(),
+        ctx.db.query("dollarMetrics").first(),
+        ctx.db.query("methodologies").first(),
+        ctx.db.query("emailSubscribers").first(),
+      ]);
+    const containsOnlySeedGraph =
+      allCurrencies.length === currencies.length &&
+      allSources.length === sources.length &&
+      allCountries.length === countries.length &&
+      allCurrencies.every((record) => record.seedVersion === VERIFIED_CURRENCY_SEED_VERSION) &&
+      allSources.every((record) => record.seedVersion === VERIFIED_CURRENCY_SEED_VERSION) &&
+      allCountries.every((record) => record.seedVersion === VERIFIED_CURRENCY_SEED_VERSION) &&
+      event === null &&
+      currencyMetric === null &&
+      dollarMetric === null &&
+      methodology === null &&
+      subscriber === null;
+    if (!containsOnlySeedGraph) {
+      throw new ConvexError(
+        "Seed removal is allowed only when the database contains the isolated seed graph; no records were removed.",
+      );
+    }
     for (const currency of currencies) await ctx.db.delete(currency._id);
     for (const source of sources) await ctx.db.delete(source._id);
     for (const country of countries) await ctx.db.delete(country._id);

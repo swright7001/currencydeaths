@@ -8,7 +8,7 @@ export type VerifiedSeedSource = Readonly<{
   title: string;
   publisher: string;
   url: string;
-  sourceType: "central_bank" | "international_institution";
+  sourceType: "central_bank" | "international_institution" | "academic";
 }>;
 
 export type VerifiedSeedClaim = Readonly<{
@@ -81,13 +81,20 @@ export const verifiedCurrencySeed = {
       title: "Resources in the Service of the Nation",
       publisher: "Magyar Nemzeti Bank",
       url: "https://en-hitelintezetiszemle.mnb.hu/letoltes/tamas-fulop.pdf",
-      sourceType: "central_bank",
+      sourceType: "academic",
     },
     {
       key: "imf-zimbabwe-history",
       title: "Zimbabwe: Selected Issues, A Brief Monetary History of Zimbabwe",
       publisher: "International Monetary Fund",
       url: "https://www.elibrary.imf.org/view/journals/002/2020/082/article-A004-en.xml",
+      sourceType: "international_institution",
+    },
+    {
+      key: "imf-zimbabwe-policy-options",
+      title: "Zimbabwe: Challenges and Policy Options after Hyperinflation",
+      publisher: "International Monetary Fund",
+      url: "https://www.imf.org/external/pubs/ft/dp/2010/afr1003.pdf",
       sourceType: "international_institution",
     },
     {
@@ -167,10 +174,10 @@ export const verifiedCurrencySeed = {
       failureCauses: ["hyperinflation", "loss_of_confidence", "monetary_reform", "replacement"],
       summary: "Zimbabwe's post-independence dollar regime ended in hyperinflation and was abandoned for a multicurrency system in early 2009.",
       historicalContext: "This record groups the 1980 dollar and its successive redenominations as one monetary regime; it does not treat each redenomination as a separate long-lived currency.",
-      sourceKeys: ["imf-zimbabwe-history"],
+      sourceKeys: ["imf-zimbabwe-history", "imf-zimbabwe-policy-options"],
       claims: [
         { field: "startDate", statement: "At independence in 1980, the currency was renamed the Zimbabwe dollar.", sourceKeys: ["imf-zimbabwe-history"], ambiguity: "The IMF passage establishes the year but not a precise introduction day." },
-        { field: "endDate/status/replacement", statement: "Zimbabwe abandoned its domestic currency and officially recognized a multicurrency system in early 2009.", sourceKeys: ["imf-zimbabwe-history"], ambiguity: "February is used at month precision; different legal and de facto transition milestones occurred across early 2009." },
+        { field: "endDate/status/replacement", statement: "Zimbabwe abandoned its domestic currency and officially recognized a multicurrency system in February 2009.", sourceKeys: ["imf-zimbabwe-history", "imf-zimbabwe-policy-options"], ambiguity: "The IMF distinguishes the earlier de facto abandonment from official recognition in February; the record uses the official transition at month precision." },
         { field: "primaryFailureCause", statement: "Monetary financing and economic decline culminated in hyperinflation.", sourceKeys: ["imf-zimbabwe-history"] },
       ],
     },

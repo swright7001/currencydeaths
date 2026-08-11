@@ -7,7 +7,7 @@ import { modules } from "./test.setup";
 const version = "currency-research-v1" as const;
 
 describe("verified currency seed mutation", () => {
-  it("is idempotent and removable without touching unrelated data", async () => {
+  it("is idempotent and refuses rollback when unrelated data exists", async () => {
     const t = convexTest(schema, modules);
     const unrelatedCountryId = await t.mutation(internal.research.createCountry, {
       name: "Unrelated Republic",
@@ -16,24 +16,53 @@ describe("verified currency seed mutation", () => {
     });
 
     expect(await t.mutation(internal.seedVerifiedCurrencies.apply, { version })).toMatchObject({
-      inserted: { countries: 5, sources: 8, currencies: 5 },
+      inserted: { countries: 5, sources: 9, currencies: 5 },
       existing: { countries: 0, sources: 0, currencies: 0 },
     });
     expect(await t.mutation(internal.seedVerifiedCurrencies.apply, { version })).toMatchObject({
       inserted: { countries: 0, sources: 0, currencies: 0 },
-      existing: { countries: 5, sources: 8, currencies: 5 },
+      existing: { countries: 5, sources: 9, currencies: 5 },
     });
 
     const counts = await t.run(async (ctx) => ({
       currencies: (await ctx.db.query("currencies").take(20)).length,
       sources: (await ctx.db.query("sources").take(20)).length,
     }));
-    expect(counts).toEqual({ currencies: 5, sources: 8 });
+    expect(counts).toEqual({ currencies: 5, sources: 9 });
 
-    expect(await t.mutation(internal.seedVerifiedCurrencies.remove, { version })).toMatchObject({
-      removed: { countries: 5, sources: 8, currencies: 5 },
+    const attachedEventId = await t.run(async (ctx) => {
+      const currency = await ctx.db
+        .query("currencies")
+        .withIndex("by_slug", (q) => q.eq("slug", "german-papiermark"))
+        .unique();
+      if (currency === null) throw new Error("seed currency missing");
+      return await ctx.db.insert("currencyEvents", {
+        currencyId: currency._id,
+        date: { year: 1923, precision: "year" },
+        dateKey: 19_230_000,
+        eventType: "other",
+        title: "Unrelated follow-up research",
+        description: "Proves rollback refuses dependent records.",
+        sourceIds: [],
+        recordState: "development_fixture",
+        createdAt: 0,
+        updatedAt: 0,
+      });
     });
+
+    await expect(
+      t.mutation(internal.seedVerifiedCurrencies.remove, { version }),
+    ).rejects.toThrow("isolated seed graph");
     expect(await t.run((ctx) => ctx.db.get(unrelatedCountryId))).not.toBeNull();
+
+    await t.run((ctx) => ctx.db.delete(unrelatedCountryId));
+    await expect(
+      t.mutation(internal.seedVerifiedCurrencies.remove, { version }),
+    ).rejects.toThrow("isolated seed graph");
+    await t.run((ctx) => ctx.db.delete(attachedEventId));
+    expect(await t.mutation(internal.seedVerifiedCurrencies.remove, { version })).toMatchObject({
+      removed: { countries: 5, sources: 9, currencies: 5 },
+    });
   });
 
   it("refuses to claim an existing non-seed unique key", async () => {

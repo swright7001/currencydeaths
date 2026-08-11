@@ -17,8 +17,9 @@ All sources were accessed on 2026-08-11 UTC.
 | `bundesbank-inflation-history` | Deutsche Bundesbank | [Inflation – lessons learnt from history](https://www.bundesbank.de/en/tasks/topics/inflation-lessons-learnt-from-history-666006) | Central bank |
 | `bundesbank-purchasing-power` | Deutsche Bundesbank | [Purchasing power comparisons of historical amounts of money](https://www.bundesbank.de/en/statistics/economic-activity-and-prices/national-producer-and-consumer-prices/purchasing-power-comparisons-of-historical-amounts-of-money-795290) | Central bank |
 | `mnb-history` | Magyar Nemzeti Bank | [History](https://www.mnb.hu/en/the-central-bank/organisation/history) | Central bank |
-| `mnb-pengo-introduction` | Magyar Nemzeti Bank | [Resources in the Service of the Nation](https://en-hitelintezetiszemle.mnb.hu/letoltes/tamas-fulop.pdf) | Central bank publication |
+| `mnb-pengo-introduction` | Financial and Economic Review, hosted by Magyar Nemzeti Bank | [Resources in the Service of the Nation](https://en-hitelintezetiszemle.mnb.hu/letoltes/tamas-fulop.pdf) | Academic; author disclaims institutional MNB authorship |
 | `imf-zimbabwe-history` | International Monetary Fund | [Zimbabwe: Selected Issues — A Brief Monetary History of Zimbabwe](https://www.elibrary.imf.org/view/journals/002/2020/082/article-A004-en.xml) | International institution |
+| `imf-zimbabwe-policy-options` | International Monetary Fund | [Zimbabwe: Challenges and Policy Options after Hyperinflation](https://www.imf.org/external/pubs/ft/dp/2010/afr1003.pdf) | International institution |
 | `imf-venezuela-redenomination` | International Monetary Fund | [Recognizing Reality: Unification of Official and Parallel Market Exchange Rates](https://www.elibrary.imf.org/abstract/journals/001/2021/025/article-A001-en.xml) | International institution |
 | `imf-venezuela-exchange-metadata` | International Monetary Fund | [Exchange Rate Database Country Notes](https://data.imf.org/-/media/iData/External-Storage/Documents/7F74AA6D71D2438285DBAC19451D7F7C/en/Metadata-Exchange-Rate-database_Country-notes.pdf) | International institution dataset metadata |
 | `bog-drachma` | Bank of Greece | [Drachma](https://www.bankofgreece.gr/en/the-bank/history/drachma) | Central bank |
@@ -34,7 +35,7 @@ All sources were accessed on 2026-08-11 UTC.
 | Hungarian pengő | End, status, replacement | The forint replaced the pengő on 1 August 1946. | `mnb-history` | None identified. |
 | Hungarian pengő | Primary cause | Postwar inflation produced an extreme loss of value. | `mnb-history` | The record also classifies war and reform as contributing causes. |
 | Zimbabwe dollar regime | Start | At independence in 1980, the currency was renamed the Zimbabwe dollar. | `imf-zimbabwe-history` | The source supports year precision, not an exact introduction day. |
-| Zimbabwe dollar regime | End, status, replacement | The domestic currency was abandoned and a multicurrency system officially recognized in early 2009. | `imf-zimbabwe-history` | February is stored at month precision; legal and de facto transition milestones occurred at different points. |
+| Zimbabwe dollar regime | End, status, replacement | The domestic currency was abandoned and the multicurrency system officially recognized in February 2009. | `imf-zimbabwe-history`, `imf-zimbabwe-policy-options` | The IMF distinguishes earlier de facto abandonment from official recognition in February; the record uses the latter at month precision. |
 | Zimbabwe dollar regime | Primary cause | Monetary financing and economic decline culminated in hyperinflation. | `imf-zimbabwe-history` | The record groups successive redenominations rather than presenting them as separate lifespans. |
 | Venezuelan bolívar fuerte | Start | Introduced on 1 January 2008 at 1,000 old bolívares per new unit. | `imf-venezuela-exchange-metadata` | None identified. |
 | Venezuelan bolívar fuerte | End, status, replacement | Replaced by the bolívar soberano on 20 August 2018 at 100,000 to one. | `imf-venezuela-redenomination`, `imf-venezuela-exchange-metadata` | Classified as `redenominated`, not as a claim that Venezuela stopped having a national currency. |
@@ -54,10 +55,10 @@ CONVEX_AGENT_MODE=anonymous npx convex dev --once
 npx convex run seedVerifiedCurrencies:apply '{"version":"currency-research-v1"}'
 ```
 
-Rollback is scoped to records carrying the exact seed namespace:
+Rollback is scoped to records carrying the exact seed namespace and is deliberately conservative:
 
 ```bash
 npx convex run seedVerifiedCurrencies:remove '{"version":"currency-research-v1"}'
 ```
 
-Do not invoke either operation against production without a separately approved data-import issue. The rollback path is intended before other records are attached to seeded countries or sources.
+Do not invoke either operation against production without a separately approved data-import issue. Rollback succeeds only when the database contains the isolated seed graph and no events, metrics, methodologies, subscribers, or unrelated country/source/currency records. Otherwise it aborts atomically without deleting anything, preventing dangling references.
