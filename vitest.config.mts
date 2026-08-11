@@ -15,7 +15,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "domain",
-          include: ["tests/**/*.test.ts"],
+          include: ["tests/**/*.test.{ts,tsx}"],
           environment: "node",
         },
       },
