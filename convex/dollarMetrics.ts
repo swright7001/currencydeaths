@@ -11,6 +11,7 @@ import {
   type DollarMetricFixtureSource,
 } from "../lib/data/dollar-metric-fixtures";
 import { historicalDateToKey } from "../lib/data/historical-date";
+import type { DollarMetricSeriesContract } from "../lib/data/dollar-metric-query-contract";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, query, type QueryCtx } from "./_generated/server";
 import {
@@ -239,7 +240,7 @@ export const getSeries = query({
       )
         ? "Development fixtures — not live data. Values may be revised; consult the cited source."
         : null,
-    };
+    } satisfies DollarMetricSeriesContract;
   },
 });
 

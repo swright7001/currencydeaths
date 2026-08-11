@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const navigation = [
   { href: "/", label: "Countdown" },
+  { href: "/dollar", label: "Dollar" },
   { href: "/deaths", label: "Past deaths" },
   { href: "/compare", label: "Compare" },
   { href: "/lifespan", label: "Lifespan data" },

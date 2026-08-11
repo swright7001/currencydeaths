@@ -5,12 +5,14 @@ type SourceCitationProps = Readonly<{
   source: SourceReference;
   state?: Extract<DataState, "sourced" | "stale" | "fixture" | "unavailable">;
   claim?: string;
+  ariaLabel?: string;
 }>;
 
 export function SourceCitation({
   source,
   state = "sourced",
   claim,
+  ariaLabel = "Source citation",
 }: SourceCitationProps) {
   const sourceName = source.url ? (
     <a href={source.url} rel="noreferrer">
@@ -21,7 +23,7 @@ export function SourceCitation({
   );
 
   return (
-    <aside className="source-citation" data-state={state} aria-label="Source citation">
+    <aside className="source-citation" data-state={state} aria-label={ariaLabel}>
       <div className="source-citation__rail" aria-hidden="true" />
       <div className="source-citation__body">
         <div className="source-citation__heading">
