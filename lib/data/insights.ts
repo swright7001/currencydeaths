@@ -64,7 +64,7 @@ export const insightArticles: readonly InsightArticle[] = [
       {
         id: "drachma",
         kind: "fact",
-        heading: "Replacement through currency union: the drachma",
+        heading: "The drachma and the euro cash changeover",
         claims: [
           {
             text: "The Bank of Greece records the drachma as Greece’s national currency from 1833 and identifies 28 February 2002 as the date drachma cash ceased to be legal tender after euro cash entered circulation.",
@@ -75,7 +75,7 @@ export const insightArticles: readonly InsightArticle[] = [
       {
         id: "papiermark",
         kind: "fact",
-        heading: "Replacement after hyperinflation: the paper mark",
+        heading: "The paper mark and the 1923 currency reform",
         claims: [
           {
             text: "Deutsche Bundesbank material dates the suspension of gold convertibility to 31 July 1914 and describes the 1923 hyperinflation. Currency reform introduced the Rentenmark in November 1923, with the Reichsmark following as the official successor in 1924.",
@@ -86,7 +86,7 @@ export const insightArticles: readonly InsightArticle[] = [
       {
         id: "redenomination",
         kind: "fact",
-        heading: "Redenomination: a new unit inside a continuing system",
+        heading: "The Venezuelan bolívar redenomination dates",
         claims: [
           {
             text: "IMF records show the bolívar fuerte began on 1 January 2008 and was replaced by the bolívar soberano on 20 August 2018 at 100,000 old units to one new unit amid hyperinflation.",
