@@ -4,6 +4,9 @@ import {
   currencyEventTypeValidator,
   currencyStatusValidator,
   currencyTypeValidator,
+  dollarMetricFrequencyValidator,
+  dollarMetricKeyValidator,
+  dollarMetricUnitValidator,
   failureCauseValidator,
   historicalDateValidator,
   recordStateValidator,
@@ -102,17 +105,23 @@ export default defineSchema({
   ]),
 
   dollarMetrics: defineTable({
-    metric: v.string(),
+    metric: dollarMetricKeyValidator,
     observationDate: historicalDateValidator,
     observationDateKey: v.number(),
     value: v.number(),
-    unit: v.string(),
+    unit: dollarMetricUnitValidator,
+    frequency: v.optional(dollarMetricFrequencyValidator),
+    sourceSeriesId: v.optional(v.string()),
+    sourceUpdatedAt: v.optional(v.number()),
+    fixtureBatchVersion: v.optional(v.string()),
     sourceId: v.id("sources"),
     notes: v.optional(v.string()),
     recordState: recordStateValidator,
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_metric_and_observation_date_key", ["metric", "observationDateKey"]),
+  })
+    .index("by_metric_and_observation_date_key", ["metric", "observationDateKey"])
+    .index("by_fixture_batch_version", ["fixtureBatchVersion"]),
 
   methodologies: defineTable({
     name: v.string(),

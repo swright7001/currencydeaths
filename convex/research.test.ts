@@ -129,20 +129,41 @@ describe("monetary-history storage contracts", () => {
       source: { id: sourceId, url: sourceArgs.url },
     });
 
-    expect(await t.query(api.research.getLatestDollarMetric, { metric: "m2" })).toBeNull();
+    expect(
+      await t.query(api.dollarMetrics.getSeries, {
+        metric: "m2",
+        asOf: Date.UTC(2026, 7, 2),
+      }),
+    ).toBeNull();
     await t.mutation(internal.research.createDollarMetric, {
       metric: "m2",
       observationDate: { year: 2026, month: 7, precision: "month" },
       value: 1,
-      unit: "fixture_index",
+      unit: "billions_usd_seasonally_adjusted",
+      frequency: "monthly",
+      sourceSeriesId: "M2SL",
+      sourceUpdatedAt: Date.UTC(2026, 7, 1),
       sourceId,
       recordState: "development_fixture",
     });
-    expect(await t.query(api.research.getLatestDollarMetric, { metric: "m2" })).toMatchObject({
-      value: 1,
-      observationDate: { year: 2026, month: 7, precision: "month" },
-      notes: null,
-      source: { id: sourceId },
+    expect(
+      await t.query(api.dollarMetrics.getSeries, {
+        metric: "m2",
+        asOf: Date.UTC(2026, 7, 2),
+      }),
+    ).toMatchObject({
+      latest: {
+        value: 1,
+        observationDate: { year: 2026, month: 7, precision: "month" },
+        frequency: "monthly",
+        sourceSeriesId: "M2SL",
+        sourceUpdatedAt: Date.UTC(2026, 7, 1),
+        notes: null,
+        source: { id: sourceId },
+      },
+      freshness: { state: "current" },
+      developmentNotice:
+        "Development fixtures — not live data. Values may be revised; consult the cited source.",
     });
   });
 
@@ -198,13 +219,16 @@ describe("monetary-history storage contracts", () => {
 
     await expect(
       t.mutation(internal.research.createDollarMetric, {
-        metric: "invalid_metric",
-        observationDate: { year: 1990, precision: "year" },
+        metric: "m2",
+        observationDate: { year: 1990, month: 1, precision: "month" },
         value: Number.NaN,
-        unit: "fixture",
+        unit: "billions_usd_seasonally_adjusted",
+        frequency: "monthly",
+        sourceSeriesId: "M2SL",
+        sourceUpdatedAt: Date.UTC(1990, 1, 1),
         sourceId,
         recordState: "development_fixture",
       }),
-    ).rejects.toThrow("Metric value must be a finite number");
+    ).rejects.toThrow("Dollar metric value must be a finite number");
   });
 });

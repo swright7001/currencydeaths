@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as dollarMetrics from "../dollarMetrics.js";
 import type * as research from "../research.js";
 import type * as seedVerifiedCurrencies from "../seedVerifiedCurrencies.js";
 import type * as validators from "../validators.js";
@@ -19,6 +20,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  dollarMetrics: typeof dollarMetrics;
   research: typeof research;
   seedVerifiedCurrencies: typeof seedVerifiedCurrencies;
   validators: typeof validators;
