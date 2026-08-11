@@ -487,9 +487,10 @@
 .insight-article-hero h1 { max-width: 12ch; margin-top: var(--space-4); font-size: clamp(4rem, 8vw, 7rem); }
 .insight-article-hero .shell-container > p:not(.section-kicker) { max-width: 48rem; margin: var(--space-6) 0 0; color: var(--color-text-secondary); font-size: clamp(1rem, 2vw, 1.3rem); line-height: 1.7; }
 .insight-article-hero dl { display: flex; flex-wrap: wrap; gap: 1px; margin: clamp(2rem, 5vw, 4rem) 0 0; background: var(--color-border); }
-.insight-article-hero dl div { min-width: 11rem; padding: var(--space-4) var(--space-5); background: #090b0c; }
+.insight-article-hero dl div { min-width: 11rem; flex: 1 1 11rem; padding: var(--space-4) var(--space-5); background: #090b0c; }
+.insight-article-hero dl div:nth-child(2) { flex-grow: 2; }
 .insight-article-hero dt { color: var(--color-text-muted); font-family: var(--font-geist-mono), monospace; font-size: 0.54rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.insight-article-hero dd { margin: 0.45rem 0 0; color: var(--color-text-primary); font-family: var(--font-geist-mono), monospace; font-size: 0.68rem; }
+.insight-article-hero dd { margin: 0.45rem 0 0; overflow-wrap: anywhere; color: var(--color-text-primary); font-family: var(--font-geist-mono), monospace; font-size: 0.68rem; line-height: 1.5; }
 
 .insight-article-layout { display: grid; align-items: start; gap: clamp(3rem, 8vw, 8rem); grid-template-columns: minmax(12rem, 0.34fr) minmax(0, 0.9fr); padding-block: clamp(4rem, 8vw, 8rem); }
 .insight-article-layout > nav { position: sticky; top: 7rem; padding-top: var(--space-4); border-top: 1px solid var(--color-signal); }
@@ -505,7 +506,9 @@
 .insight-prose > section[data-kind="fact"] > span { border-color: rgb(111 174 138 / 55%); color: var(--color-positive); }
 .insight-prose > section[data-kind="interpretation"] > span { border-color: rgb(227 138 58 / 55%); color: var(--color-caution); }
 .insight-prose h2 { max-width: 13ch; margin-top: var(--space-5); font-size: clamp(2.6rem, 5vw, 4.8rem); }
-.insight-prose > section > p { max-width: 46rem; margin: var(--space-5) 0 0; color: var(--color-text-secondary); font-size: clamp(0.95rem, 1.5vw, 1.08rem); line-height: 1.85; }
+.insight-prose > section > p,
+.insight-fact-claim > p { max-width: 46rem; margin: var(--space-5) 0 0; color: var(--color-text-secondary); font-size: clamp(0.95rem, 1.5vw, 1.08rem); line-height: 1.85; }
+.insight-fact-claim + .insight-fact-claim { margin-top: var(--space-8); }
 .insight-prose .source-citation { max-width: 46rem; margin-top: var(--space-6); }
 
 .insight-related { padding-block: clamp(4rem, 8vw, 7rem); border-top: 1px solid var(--color-border); background: #090b0c; }

@@ -11,7 +11,7 @@ export function InsightCard({ article }: Readonly<{ article: InsightArticle }>) 
       <h2><Link href={`/insights/${article.slug}`}>{article.title}</Link></h2>
       <p>{article.dek}</p>
       <footer>
-        <span>Reviewed {article.reviewedDate}</span>
+        <span>Development draft / updated {article.updatedDate}</span>
         <Link href={`/insights/${article.slug}`}>Read research note →</Link>
       </footer>
     </article>

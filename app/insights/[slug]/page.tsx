@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: InsightPageProps): Promise<Me
     title,
     description: article.dek,
     alternates: { canonical: url },
-    openGraph: { title, description: article.dek, type: "article", url, publishedTime: article.publishedDate, modifiedTime: article.reviewedDate },
+    openGraph: { title, description: article.dek, type: "article", url, publishedTime: article.publishedDate, modifiedTime: article.updatedDate },
     twitter: { card: "summary_large_image", title, description: article.dek },
   };
 }
@@ -43,12 +43,13 @@ export default async function InsightArticlePage({ params }: InsightPageProps) {
       <header className="insight-article-hero">
         <div className="shell-container">
           <Link href="/insights">← Return to insights</Link>
-          <p className="section-kicker">{article.category} / reviewed research note</p>
+          <p className="section-kicker">{article.category} / development research note</p>
           <h1>{article.title}</h1>
           <p>{article.dek}</p>
           <dl>
             <div><dt>Published</dt><dd>{article.publishedDate}</dd></div>
-            <div><dt>Reviewed</dt><dd>{article.reviewedDate}</dd></div>
+            <div><dt>Status</dt><dd>Development draft — editorial review pending</dd></div>
+            <div><dt>Updated</dt><dd>{article.updatedDate}</dd></div>
             <div><dt>Reading time</dt><dd>{article.readingMinutes} minutes</dd></div>
           </dl>
         </div>
@@ -61,14 +62,17 @@ export default async function InsightArticlePage({ params }: InsightPageProps) {
         </nav>
         <article className="insight-prose">
           {article.sections.map((section) => (
-            <section id={section.id} key={section.id} data-kind={section.label === "Sourced fact" ? "fact" : "interpretation"}>
-              <span>{section.label}</span>
+            <section id={section.id} key={section.id} data-kind={section.kind}>
+              <span>{section.kind === "fact" ? "Sourced fact" : "Interpretation"}</span>
               <h2>{section.heading}</h2>
-              {section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              {section.sourceKeys?.map((key, index) => {
-                const source = getInsightSources([key])[0];
-                return <SourceCitation key={key} source={source} claim={`Citation ${index + 1} for this sourced-fact section.`} ariaLabel={`Source for ${section.heading}`} />;
-              })}
+              {section.kind === "interpretation" ? section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>) : section.claims.map((claim) => (
+                <div className="insight-fact-claim" key={claim.text}>
+                  <p>{claim.text}</p>
+                  {getInsightSources(claim.sourceKeys).map((source) => (
+                    <SourceCitation key={source.url} source={source} claim={claim.text} ariaLabel={`Source for claim: ${claim.text}`} />
+                  ))}
+                </div>
+              ))}
             </section>
           ))}
         </article>

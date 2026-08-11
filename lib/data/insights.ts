@@ -1,13 +1,28 @@
 import type { SourceReference } from "../../components/research";
 import { verifiedCurrencySeed } from "./verified-currency-seed";
 
-export type InsightSection = Readonly<{
-  id: string;
-  label: "Sourced fact" | "Interpretation";
-  heading: string;
-  paragraphs: readonly string[];
-  sourceKeys?: readonly string[];
+type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
+
+export type InsightFactClaim = Readonly<{
+  text: string;
+  sourceKeys: NonEmptyReadonlyArray<string>;
 }>;
+
+export type InsightFactSection = Readonly<{
+  id: string;
+  kind: "fact";
+  heading: string;
+  claims: NonEmptyReadonlyArray<InsightFactClaim>;
+}>;
+
+export type InsightInterpretationSection = Readonly<{
+  id: string;
+  kind: "interpretation";
+  heading: string;
+  paragraphs: NonEmptyReadonlyArray<string>;
+}>;
+
+export type InsightSection = InsightFactSection | InsightInterpretationSection;
 
 export type InsightArticle = Readonly<{
   slug: string;
@@ -16,7 +31,8 @@ export type InsightArticle = Readonly<{
   category: string;
   readingMinutes: number;
   publishedDate: string;
-  reviewedDate: string;
+  updatedDate: string;
+  editorialStatus: "development-draft";
   sections: readonly InsightSection[];
   relatedMethodologies: readonly Readonly<{ title: string; href: string; note: string }>[];
 }>;
@@ -33,11 +49,12 @@ export const insightArticles: readonly InsightArticle[] = [
     category: "Classification",
     readingMinutes: 6,
     publishedDate: "2026-08-11",
-    reviewedDate: "2026-08-11",
+    updatedDate: "2026-08-11",
+    editorialStatus: "development-draft",
     sections: [
       {
         id: "the-distinction",
-        label: "Interpretation",
+        kind: "interpretation",
         heading: "The ending is not the diagnosis",
         paragraphs: [
           "A currency’s final date tells us when one monetary unit stopped serving its recorded role. It does not, by itself, tell us why. An orderly currency-union transition and a hyperinflationary abandonment can both produce an end date while describing radically different economic experiences.",
@@ -46,39 +63,43 @@ export const insightArticles: readonly InsightArticle[] = [
       },
       {
         id: "drachma",
-        label: "Sourced fact",
+        kind: "fact",
         heading: "Replacement through currency union: the drachma",
-        paragraphs: [
-          "The Bank of Greece records the drachma as Greece’s national currency from 1833 and identifies 28 February 2002 as the date drachma cash ceased to be legal tender after euro cash entered circulation.",
-          "In this archive, that outcome is classified as replacement through currency union—not collapse. The long record crossed multiple monetary standards, so the database does not pretend one unchanged fiat regime ran continuously for the entire span.",
+        claims: [
+          {
+            text: "The Bank of Greece records the drachma as Greece’s national currency from 1833 and identifies 28 February 2002 as the date drachma cash ceased to be legal tender after euro cash entered circulation.",
+            sourceKeys: ["bog-drachma"],
+          },
         ],
-        sourceKeys: ["bog-drachma"],
       },
       {
         id: "papiermark",
-        label: "Sourced fact",
+        kind: "fact",
         heading: "Replacement after hyperinflation: the paper mark",
-        paragraphs: [
-          "Deutsche Bundesbank material dates the suspension of gold convertibility to 31 July 1914 and describes the 1923 hyperinflation. Currency reform introduced the Rentenmark in November 1923, with the Reichsmark following as the official successor in 1924.",
-          "That sequence supports a replacement status with hyperinflation as the primary documented cause. It does not support treating every historical replacement as a hyperinflationary collapse.",
+        claims: [
+          {
+            text: "Deutsche Bundesbank material dates the suspension of gold convertibility to 31 July 1914 and describes the 1923 hyperinflation. Currency reform introduced the Rentenmark in November 1923, with the Reichsmark following as the official successor in 1924.",
+            sourceKeys: ["bundesbank-inflation-history", "bundesbank-purchasing-power"],
+          },
         ],
-        sourceKeys: ["bundesbank-inflation-history", "bundesbank-purchasing-power"],
       },
       {
         id: "redenomination",
-        label: "Sourced fact",
+        kind: "fact",
         heading: "Redenomination: a new unit inside a continuing system",
-        paragraphs: [
-          "IMF records show the bolívar fuerte began on 1 January 2008 and was replaced by the bolívar soberano on 20 August 2018 at 100,000 old units to one new unit amid hyperinflation.",
-          "Redenomination changes the unit of account. It can accompany severe monetary stress, but the label itself is an operation—not a complete causal explanation.",
+        claims: [
+          {
+            text: "IMF records show the bolívar fuerte began on 1 January 2008 and was replaced by the bolívar soberano on 20 August 2018 at 100,000 old units to one new unit amid hyperinflation.",
+            sourceKeys: ["imf-venezuela-redenomination", "imf-venezuela-exchange-metadata"],
+          },
         ],
-        sourceKeys: ["imf-venezuela-redenomination", "imf-venezuela-exchange-metadata"],
       },
       {
         id: "comparison-rule",
-        label: "Interpretation",
+        kind: "interpretation",
         heading: "A better rule for historical comparison",
         paragraphs: [
+          "In this archive, the drachma outcome is classified as replacement through currency union—not collapse. The paper mark sequence supports a replacement status with hyperinflation as the primary documented cause. Redenomination can accompany severe monetary stress, but the label itself is an operation—not a complete causal explanation.",
           "Compare mechanisms before outcomes: ask what changed in fiscal capacity, monetary issuance, convertibility, political authority, and public confidence. Then ask whether the ending was planned, coerced, or disorderly.",
           "This discipline does not make history less urgent. It makes the warning signs more credible by refusing to turn unlike events into one dramatic statistic.",
         ],
@@ -118,6 +139,23 @@ export function getInsightSources(keys: readonly string[]): readonly SourceRefer
   });
 }
 
+export function validateInsightArticles(articles: readonly InsightArticle[]): void {
+  const slugs = new Set<string>();
+  for (const article of articles) {
+    if (slugs.has(article.slug)) throw new Error(`Duplicate insight slug: ${article.slug}`);
+    slugs.add(article.slug);
+    for (const section of article.sections) {
+      if (section.kind !== "fact") continue;
+      for (const claim of section.claims) {
+        if (claim.sourceKeys.length === 0) throw new Error(`Unsourced insight claim: ${claim.text}`);
+        getInsightSources(claim.sourceKeys);
+      }
+    }
+  }
+}
+
+validateInsightArticles(insightArticles);
+
 export function createInsightStructuredData(article: InsightArticle) {
   return {
     "@context": "https://schema.org",
@@ -125,7 +163,7 @@ export function createInsightStructuredData(article: InsightArticle) {
     headline: article.title,
     description: article.dek,
     datePublished: article.publishedDate,
-    dateModified: article.reviewedDate,
+    dateModified: article.updatedDate,
     author: { "@type": "Organization", name: "CurrencyDeaths Research" },
     publisher: { "@type": "Organization", name: "CurrencyDeaths" },
     mainEntityOfPage: `/insights/${article.slug}`,

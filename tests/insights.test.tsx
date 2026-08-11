@@ -2,20 +2,23 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import InsightsPage from "../app/insights/page";
 import InsightArticlePage, { generateMetadata, generateStaticParams } from "../app/insights/[slug]/page";
-import { getInsightArticle, getInsightSources, insightArticles } from "../lib/data/insights";
+import { getInsightArticle, getInsightSources, insightArticles, validateInsightArticles } from "../lib/data/insights";
 
 const slug = "currency-endings-are-not-all-collapses";
 
 describe("insight editorial model", () => {
-  it("publishes one reviewed sample with explicit fact and interpretation blocks", () => {
+  it("publishes one development draft with enforced fact and interpretation blocks", () => {
     const article = getInsightArticle(slug);
     expect(article).toBeDefined();
-    expect(article?.sections.some((section) => section.label === "Sourced fact")).toBe(true);
-    expect(article?.sections.some((section) => section.label === "Interpretation")).toBe(true);
+    expect(article?.editorialStatus).toBe("development-draft");
+    expect(article?.sections.some((section) => section.kind === "fact")).toBe(true);
+    expect(article?.sections.some((section) => section.kind === "interpretation")).toBe(true);
     for (const section of article?.sections ?? []) {
-      if (section.label === "Sourced fact") expect(section.sourceKeys?.length).toBeGreaterThan(0);
-      if (section.label === "Interpretation") expect(section.sourceKeys).toBeUndefined();
+      if (section.kind === "fact") {
+        for (const claim of section.claims) expect(claim.sourceKeys.length).toBeGreaterThan(0);
+      }
     }
+    expect(() => validateInsightArticles(insightArticles)).not.toThrow();
   });
 
   it("resolves citations only from the verified seed", () => {
@@ -44,8 +47,10 @@ describe("insights routes", () => {
     const html = renderToStaticMarkup(await InsightArticlePage({ params: Promise.resolve({ slug }) }));
     expect(html).toContain("Sourced fact");
     expect(html).toContain("Interpretation");
+    expect(html).toContain("Development draft — editorial review pending");
     expect(html).toContain('aria-label="Article contents"');
-    expect(html).toContain("Source for Replacement through currency union: the drachma");
+    expect(html).toContain("Source for claim: The Bank of Greece records the drachma");
+    expect(html).toContain("The Bank of Greece records the drachma");
     expect(html).toContain("Related methodologies");
     expect(html).not.toContain("financial advice");
   });
