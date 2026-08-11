@@ -403,6 +403,382 @@
   }
 }
 
+/* Lifespan research */
+.lifespan-page {
+  overflow: clip;
+}
+
+.lifespan-hero {
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+  background:
+    radial-gradient(circle at 72% 42%, rgb(228 56 34 / 14%), transparent 28%),
+    repeating-linear-gradient(90deg, transparent 0 6rem, rgb(255 255 255 / 2%) 6rem calc(6rem + 1px)),
+    linear-gradient(115deg, #060808, #100d0d 70%, #080909);
+}
+
+.lifespan-hero::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 55%, rgb(228 56 34 / 5%));
+  content: "";
+  pointer-events: none;
+}
+
+.lifespan-hero__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 31rem;
+  align-items: center;
+  gap: clamp(3rem, 9vw, 9rem);
+  grid-template-columns: minmax(0, 1.25fr) minmax(15rem, 0.45fr);
+  padding-block: clamp(4rem, 8vw, 7rem);
+}
+
+.lifespan-hero h1,
+.lifespan-page h2 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 730;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.lifespan-hero h1 {
+  max-width: 12ch;
+  margin-top: var(--space-4);
+  font-size: clamp(3.8rem, 8vw, 7.5rem);
+}
+
+.lifespan-hero h1 em {
+  color: var(--color-signal);
+  font-style: normal;
+}
+
+.lifespan-hero__readout {
+  display: grid;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-top-color: var(--color-signal);
+  background: rgb(7 9 9 / 82%);
+  box-shadow: 0 2rem 5rem rgb(0 0 0 / 40%);
+}
+
+.lifespan-hero__readout > span,
+.lifespan-filters header p {
+  color: var(--color-text-muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.lifespan-hero__readout strong {
+  margin-block: var(--space-3);
+  color: var(--color-signal-bright);
+  font-size: clamp(4rem, 8vw, 7rem);
+  font-weight: 480;
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+}
+
+.lifespan-hero__readout p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.lifespan-workspace {
+  display: grid;
+  gap: clamp(4rem, 8vw, 7rem);
+  padding-block: clamp(3rem, 6vw, 6rem);
+}
+
+.lifespan-filters {
+  border: 1px solid var(--color-border);
+  background: rgb(12 15 16 / 82%);
+}
+
+.lifespan-filters > header,
+.lifespan-filters > div,
+.lifespan-filters > footer {
+  display: grid;
+  align-items: end;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.lifespan-filters > header {
+  grid-template-columns: 1fr auto;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lifespan-filters header p,
+.lifespan-filters header h2 {
+  margin: 0;
+}
+
+.lifespan-filters header h2 {
+  margin-top: 0.35rem;
+  font-size: 1.55rem;
+  letter-spacing: -0.025em;
+}
+
+.lifespan-filters header > span {
+  color: var(--color-signal-bright);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+
+.lifespan-filters > div {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lifespan-filters label {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.lifespan-filters label > span {
+  color: var(--color-text-muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lifespan-filters select {
+  min-width: 0;
+  height: 2.8rem;
+  padding-inline: 0.8rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0;
+  background: #090b0c;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+
+.lifespan-filters select:focus-visible {
+  border-color: var(--color-signal);
+  outline: 2px solid rgb(228 56 34 / 25%);
+  outline-offset: 1px;
+}
+
+.lifespan-filters > footer {
+  grid-template-columns: auto auto 1fr;
+  border-top: 1px solid var(--color-border);
+}
+
+.lifespan-filters button,
+.lifespan-filters footer a {
+  display: inline-flex;
+  min-height: 2.7rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1rem;
+  border: 1px solid var(--color-signal);
+  background: transparent;
+  color: var(--color-signal-bright);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lifespan-filters button { cursor: pointer; }
+.lifespan-filters footer a { border-color: var(--color-border-strong); color: var(--color-text-secondary); }
+
+.lifespan-summary > header,
+.lifespan-distribution > header,
+.lifespan-extremes > header,
+.lifespan-breakdowns > header {
+  margin-bottom: var(--space-6);
+}
+
+.lifespan-page h2 {
+  margin-top: var(--space-3);
+  font-size: clamp(2.5rem, 5vw, 4.7rem);
+}
+
+.lifespan-summary dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--color-border);
+}
+
+.lifespan-summary dl > div {
+  min-width: 0;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  background: #0b0e0f;
+}
+
+.lifespan-summary dt,
+.lifespan-breakdowns dt {
+  color: var(--color-text-muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lifespan-summary dd {
+  margin: var(--space-4) 0 0;
+  color: var(--color-signal-bright);
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.lifespan-distribution > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.lifespan-distribution > header > p {
+  max-width: 18rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  line-height: 1.6;
+}
+
+.lifespan-distribution ol,
+.lifespan-extremes ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lifespan-distribution li {
+  display: grid;
+  align-items: center;
+  gap: var(--space-4);
+  grid-template-columns: minmax(8rem, 0.35fr) minmax(10rem, 1fr) 2rem;
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.lifespan-distribution li > div {
+  height: 0.5rem;
+  background: rgb(255 255 255 / 4%);
+}
+
+.lifespan-distribution li i {
+  display: block;
+  height: 100%;
+  min-width: 1px;
+  background: linear-gradient(90deg, var(--color-signal), var(--color-burnt-orange));
+  box-shadow: 0 0 1.3rem rgb(228 56 34 / 25%);
+}
+
+.lifespan-distribution li strong {
+  color: var(--color-text-primary);
+  font-family: var(--font-geist-mono), monospace;
+  text-align: right;
+}
+
+.lifespan-extremes > div,
+.lifespan-breakdowns > div {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lifespan-extremes article,
+.lifespan-breakdowns article {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, rgb(228 56 34 / 4%), transparent 45%), #0a0d0e;
+}
+
+.lifespan-extremes h3,
+.lifespan-breakdowns h3,
+.lifespan-methodology h3 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lifespan-extremes li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.74rem;
+}
+
+.lifespan-extremes li a { color: var(--color-text-secondary); }
+.lifespan-extremes li span { color: var(--color-signal-bright); font-family: var(--font-geist-mono), monospace; font-size: 0.62rem; }
+
+.lifespan-breakdowns > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lifespan-breakdowns dl { margin: var(--space-4) 0 0; }
+.lifespan-breakdowns dl > div { display: flex; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-3); border-bottom: 1px solid var(--color-border); }
+.lifespan-breakdowns dd { margin: 0; color: var(--color-signal-bright); font-family: var(--font-geist-mono), monospace; font-size: 0.7rem; }
+
+.lifespan-methodology {
+  display: grid;
+  gap: clamp(2rem, 6vw, 6rem);
+  grid-template-columns: minmax(0, 0.65fr) minmax(0, 1.35fr);
+  padding-top: clamp(3rem, 6vw, 6rem);
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.lifespan-methodology__notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.lifespan-methodology article { padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+.lifespan-methodology article p { margin: var(--space-3) 0 0; color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1.7; }
+
+.lifespan-empty {
+  display: grid;
+  min-height: 25rem;
+  place-content: center;
+  padding: clamp(2rem, 6vw, 5rem);
+  border: 1px dashed var(--color-border-strong);
+  text-align: center;
+}
+
+.lifespan-empty p:not(.section-kicker) { max-width: 34rem; color: var(--color-text-secondary); line-height: 1.65; }
+.lifespan-empty a { color: var(--color-signal-bright); font-family: var(--font-display), sans-serif; font-size: 0.72rem; text-transform: uppercase; }
+
+@media (max-width: 64rem) {
+  .lifespan-hero__grid,
+  .lifespan-methodology { grid-template-columns: 1fr; }
+  .lifespan-hero__readout { max-width: 26rem; }
+  .lifespan-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 46rem) {
+  .lifespan-hero__grid { min-height: 28rem; gap: var(--space-8); }
+  .lifespan-hero h1 { font-size: clamp(3.3rem, 17vw, 5rem); }
+  .lifespan-filters > div,
+  .lifespan-summary dl,
+  .lifespan-extremes > div,
+  .lifespan-breakdowns > div,
+  .lifespan-methodology__notes { grid-template-columns: 1fr; }
+  .lifespan-filters > footer { grid-template-columns: 1fr; }
+  .lifespan-distribution > header { align-items: flex-start; flex-direction: column; }
+  .lifespan-distribution li { grid-template-columns: minmax(6rem, 0.65fr) minmax(5rem, 1fr) 1.5rem; gap: var(--space-3); }
+  .lifespan-extremes li { align-items: start; grid-template-columns: 1fr; }
+}
+
 /* Comparison research */
 .compare-page {
   overflow: clip;
