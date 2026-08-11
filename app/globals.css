@@ -685,6 +685,7 @@
 .compare-value dt { color: var(--color-text-muted); font-size: 0.52rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .compare-value dd { margin: 0.35rem 0 0; overflow-wrap: anywhere; color: var(--color-text-secondary); font-size: 0.62rem; line-height: 1.45; }
 .compare-value a { color: var(--color-signal-bright); }
+.compare-source-list { display: grid; gap: 0.25rem; }
 
 .compare-resolution { border-top: 1px solid var(--color-border); background: linear-gradient(90deg, rgb(228 56 34 / 6%), transparent 48%); }
 .compare-resolution > div { display: grid; grid-template-columns: 1fr 1fr auto; gap: clamp(2rem, 5vw, 5rem); align-items: end; padding-block: clamp(3rem, 6vw, 5rem); }

@@ -3,7 +3,6 @@ import {
   currencyDetailSlugs,
   formatHistoricalDate,
   getCurrencyDetail,
-  type CurrencyDetail,
 } from "./currency-detail";
 
 export type ComparisonMode = "direct" | "contextual" | "unavailable";
@@ -18,7 +17,7 @@ export type ComparisonSide = Readonly<{
   value: string | null;
   unit: string;
   timeWindow: string;
-  source: ComparisonSource | null;
+  sources: readonly ComparisonSource[];
   unavailableReason?: string;
 }>;
 
@@ -35,10 +34,18 @@ export type ComparisonQueryState = "default" | "selected" | "invalid";
 
 const defaultCurrencySlug = "german-papiermark";
 
-function sourceFromDetail(detail: CurrencyDetail): ComparisonSource {
-  const source = detail.sources[0];
-  if (source === undefined) throw new Error(`Comparison source missing: ${detail.slug}`);
-  return { title: source.title, publisher: source.publisher, url: source.url };
+function comparisonSources(
+  sources: readonly ComparisonSource[],
+): readonly ComparisonSource[] {
+  const uniqueByUrl = new Map<string, ComparisonSource>();
+  for (const source of sources) {
+    uniqueByUrl.set(source.url, {
+      title: source.title,
+      publisher: source.publisher,
+      url: source.url,
+    });
+  }
+  return [...uniqueByUrl.values()];
 }
 
 function formatLifespan(minimum: number, maximum: number) {
@@ -46,7 +53,7 @@ function formatLifespan(minimum: number, maximum: number) {
 }
 
 function unavailable(reason: string, unit: string, timeWindow: string): ComparisonSide {
-  return { value: null, unit, timeWindow, source: null, unavailableReason: reason };
+  return { value: null, unit, timeWindow, sources: [], unavailableReason: reason };
 }
 
 export const comparisonCurrencyOptions = currencyDetailSlugs.map((slug) => {
@@ -74,7 +81,15 @@ export function buildCurrencyComparison(slug: string) {
   const m2 = dollarMetric.get("m2")!;
   const cpi = dollarMetric.get("cpi")!;
   const debt = dollarMetric.get("federal_debt_to_gdp")!;
-  const historicalSource = sourceFromDetail(historical);
+  const startClaim = historical.claims.find((claim) => claim.field === "startDate");
+  const endClaim = historical.claims.find((claim) => claim.field.startsWith("endDate"));
+  if (startClaim === undefined || endClaim === undefined) {
+    throw new Error(`Comparison date claims missing: ${historical.slug}`);
+  }
+  const lifespanSources = comparisonSources([...startClaim.sources, ...endClaim.sources]);
+  const causeSources = comparisonSources(historical.causeClaim.sources);
+  const contextSources = comparisonSources(historical.sources);
+  const outcomeSources = comparisonSources(endClaim.sources);
   const historicalWindow = `${formatHistoricalDate(historical.startDate)}–${formatHistoricalDate(historical.endDate)}`;
 
   const rows: readonly ComparisonRow[] = [
@@ -92,7 +107,7 @@ export function buildCurrencyComparison(slug: string) {
         value: formatLifespan(historical.lifespan.minimumYears, historical.lifespan.maximumYears),
         unit: "calendar years (derived range)",
         timeWindow: historicalWindow,
-        source: historicalSource,
+        sources: lifespanSources,
       },
     },
     {
@@ -104,13 +119,13 @@ export function buildCurrencyComparison(slug: string) {
         value: m2.displayValue,
         unit: m2.unitLabel,
         timeWindow: formatHistoricalMonth(m2.latest.observationDate),
-        source: m2.source,
+        sources: [m2.source],
       },
       historical: {
         value: historical.causeClaim.statement,
         unit: "documented narrative",
         timeWindow: historicalWindow,
-        source: historicalSource,
+        sources: causeSources,
       },
     },
     {
@@ -122,13 +137,13 @@ export function buildCurrencyComparison(slug: string) {
         value: cpi.displayValue,
         unit: cpi.unitLabel,
         timeWindow: formatHistoricalMonth(cpi.latest.observationDate),
-        source: cpi.source,
+        sources: [cpi.source],
       },
       historical: {
         value: historical.primaryFailureCause.replaceAll("_", " "),
         unit: "verified classification",
         timeWindow: historicalWindow,
-        source: historicalSource,
+        sources: causeSources,
       },
     },
     {
@@ -140,7 +155,7 @@ export function buildCurrencyComparison(slug: string) {
         value: debt.displayValue,
         unit: debt.unitLabel,
         timeWindow: formatHistoricalMonth(debt.latest.observationDate),
-        source: debt.source,
+        sources: [debt.source],
       },
       historical: unavailable(
         "No source-approved debt-to-GDP trajectory is stored for this case.",
@@ -178,7 +193,7 @@ export function buildCurrencyComparison(slug: string) {
         value: historical.historicalContext,
         unit: "documented narrative",
         timeWindow: historicalWindow,
-        source: historicalSource,
+        sources: contextSources,
       },
     },
     {
@@ -206,13 +221,13 @@ export function buildCurrencyComparison(slug: string) {
         value: "No outcome predicted",
         unit: "interpretation boundary",
         timeWindow: "ongoing",
-        source: null,
+        sources: [],
       },
       historical: {
         value: `${historical.status.replaceAll("_", " ")} → ${historical.replacementCurrencyName}`,
         unit: "verified classification and successor",
         timeWindow: formatHistoricalDate(historical.endDate),
-        source: historicalSource,
+        sources: outcomeSources,
       },
     },
   ];

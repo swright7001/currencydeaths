@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import ComparePage from "../app/compare/page";
+import { getCurrencyDetail } from "../lib/data/currency-detail";
 import {
   buildCurrencyComparison,
   comparisonCurrencyOptions,
@@ -24,6 +25,34 @@ describe("currency comparison transformation", () => {
     expect(comparison.rows.find((row) => row.key === "fiscal-stress")?.historical.value).toBeNull();
     expect(comparison.rows.find((row) => row.key === "reserve-status")?.usd.unavailableReason).toContain("not yet");
     expect(comparison.counts.direct).toBe(0);
+  });
+
+  it("binds every historical row to its audited claim-specific source set", () => {
+    for (const option of comparisonCurrencyOptions) {
+      const detail = getCurrencyDetail(option.slug)!;
+      const comparison = buildCurrencyComparison(option.slug);
+      const rows = new Map(comparison.rows.map((row) => [row.key, row]));
+      const startClaim = detail.claims.find((claim) => claim.field === "startDate")!;
+      const endClaim = detail.claims.find((claim) => claim.field.startsWith("endDate"))!;
+      const urls = (sources: readonly { url: string }[]) =>
+        [...new Set(sources.map((source) => source.url))];
+
+      expect(urls(rows.get("recorded-span")!.historical.sources)).toEqual(
+        urls([...startClaim.sources, ...endClaim.sources]),
+      );
+      expect(urls(rows.get("monetary-expansion")!.historical.sources)).toEqual(
+        urls(detail.causeClaim.sources),
+      );
+      expect(urls(rows.get("inflation")!.historical.sources)).toEqual(
+        urls(detail.causeClaim.sources),
+      );
+      expect(urls(rows.get("confidence-context")!.historical.sources)).toEqual(
+        urls(detail.sources),
+      );
+      expect(urls(rows.get("outcome")!.historical.sources)).toEqual(
+        urls(endClaim.sources),
+      );
+    }
   });
 
   it("rejects a slug outside the verified set", () => {

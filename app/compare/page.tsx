@@ -44,12 +44,16 @@ function ComparisonValue({ side, label }: Readonly<{ side: ComparisonSide; label
         <div>
           <dt>Source</dt>
           <dd>
-            {side.source === null ? (
+            {side.sources.length === 0 ? (
               "No factual source asserted"
             ) : (
-              <a href={side.source.url} target="_blank" rel="noreferrer">
-                {side.source.publisher} ↗
-              </a>
+              <span className="compare-source-list">
+                {side.sources.map((source) => (
+                  <a href={source.url} target="_blank" rel="noreferrer" key={source.url}>
+                    {source.publisher} ↗
+                  </a>
+                ))}
+              </span>
             )}
           </dd>
         </div>
