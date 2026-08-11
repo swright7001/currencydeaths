@@ -209,7 +209,7 @@ export default async function CurrencyDetailPage({ params }: CurrencyDetailPageP
           precision, lifespan is derived as a range, missing evidence stays unavailable,
           and similar historical labels do not imply identical causes or outcomes.
         </p>
-        <Link href="/methodology">Methodology route planned →</Link>
+        <Link href="/methodology/dollar-stress-score">Review stress-score methodology →</Link>
       </section>
     </main>
   );

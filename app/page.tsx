@@ -218,9 +218,11 @@ export default function Home() {
             <h2>The model should invite scrutiny.</h2>
           </div>
           <p>
-            A future stress score will expose every input, source, normalization range, weight, version, and update date. Until that contract is approved, the dramatic clock remains deliberately static.
+            The initial experimental methodology exposes three inputs, their sources,
+            normalization ranges, weights, version, and missing-data policy. It remains
+            unapproved for production labeling, and the dramatic clock stays static.
           </p>
-          <Link href="/methodology/dollar-stress-score">Review methodology placeholder →</Link>
+          <Link href="/methodology/dollar-stress-score">Review experimental methodology →</Link>
         </div>
       </section>
 
