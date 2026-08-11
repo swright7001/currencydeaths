@@ -1,9 +1,13 @@
-import type { TrendDirection } from "../research/presentation-types";
+import type {
+  TrendDirection,
+  TrendTone,
+} from "../research/presentation-types";
 
 type MetricTrendProps = Readonly<{
   direction: TrendDirection;
   value: string;
   context: string;
+  tone?: TrendTone;
 }>;
 
 const directionLabels: Record<TrendDirection, string> = {
@@ -18,9 +22,14 @@ const directionMarks: Record<TrendDirection, string> = {
   flat: "→",
 };
 
-export function MetricTrend({ direction, value, context }: MetricTrendProps) {
+export function MetricTrend({
+  direction,
+  value,
+  context,
+  tone = "neutral",
+}: MetricTrendProps) {
   return (
-    <p className="metric-trend" data-direction={direction}>
+    <p className="metric-trend" data-direction={direction} data-tone={tone}>
       <span className="metric-trend__mark" aria-hidden="true">
         {directionMarks[direction]}
       </span>

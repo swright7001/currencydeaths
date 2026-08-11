@@ -38,6 +38,8 @@ export const dataStateDescriptors: Record<DataState, DataStateDescriptor> = {
 
 export type TrendDirection = "up" | "down" | "flat";
 
+export type TrendTone = "neutral" | "positive" | "caution" | "critical";
+
 export type RiskLevel = "low" | "moderate" | "high" | "extreme" | "unavailable";
 
 export type SourceReference = Readonly<{

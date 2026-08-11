@@ -670,15 +670,19 @@ summary {
   font-weight: 650;
 }
 
-.metric-trend[data-direction="up"] .metric-trend__mark {
+.metric-trend[data-tone="caution"] .metric-trend__mark {
   color: var(--color-caution);
 }
 
-.metric-trend[data-direction="down"] .metric-trend__mark {
+.metric-trend[data-tone="positive"] .metric-trend__mark {
   color: var(--color-positive);
 }
 
-.metric-trend[data-direction="flat"] .metric-trend__mark {
+.metric-trend[data-tone="critical"] .metric-trend__mark {
+  color: var(--color-signal-bright);
+}
+
+.metric-trend[data-tone="neutral"] .metric-trend__mark {
   color: var(--color-text-muted);
 }
 
@@ -1223,6 +1227,7 @@ summary {
   .methodology-tooltip {
     width: 100%;
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

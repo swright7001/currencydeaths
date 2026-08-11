@@ -30,7 +30,32 @@ describe("research display primitives", () => {
 
     expect(html).toContain("Decreased");
     expect(html).toContain('data-direction="down"');
+    expect(html).toContain('data-tone="neutral"');
     expect(html).toContain("2.1 points");
+  });
+
+  it("keeps semantic tone independent from trend direction", () => {
+    const favorableDown = renderToStaticMarkup(
+      <MetricTrend
+        direction="down"
+        tone="positive"
+        value="2 points"
+        context="lower debt service"
+      />,
+    );
+    const adverseDown = renderToStaticMarkup(
+      <MetricTrend
+        direction="down"
+        tone="critical"
+        value="2 points"
+        context="lower reserve share"
+      />,
+    );
+
+    expect(favorableDown).toContain('data-direction="down"');
+    expect(favorableDown).toContain('data-tone="positive"');
+    expect(adverseDown).toContain('data-direction="down"');
+    expect(adverseDown).toContain('data-tone="critical"');
   });
 
   it("gives risk levels a textual label and non-color mark", () => {

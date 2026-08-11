@@ -12,4 +12,5 @@ export type {
   RiskLevel,
   SourceReference,
   TrendDirection,
+  TrendTone,
 } from "./presentation-types";
