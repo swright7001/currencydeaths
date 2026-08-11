@@ -1,0 +1,43 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import Home from "../app/page";
+
+describe("cinematic homepage shell", () => {
+  const html = renderToStaticMarkup(<Home />);
+
+  it("frames the model as an inert educational fixture", () => {
+    expect(html).toContain("Experimental Dollar Stress Model");
+    expect(html).toContain("This interval does not run and is not a forecast");
+    expect(html).toContain("Development fixture");
+    expect(html).not.toContain("probability of failure");
+    expect(html).not.toContain("death date");
+  });
+
+  it("distinguishes sourced seed data from withheld research", () => {
+    expect(html).toContain("Verified historical records");
+    expect(html).toContain("Verified seed");
+    expect(html).toContain("Average fiat lifespan");
+    expect(html).toContain("Withheld until inclusion rules");
+    expect(html).toContain("No outcome asserted");
+  });
+
+  it("renders each verified currency record without invented peak metrics", () => {
+    expect((html.match(/Research page planned/g) ?? [])).toHaveLength(5);
+    expect(html).toContain("German paper mark (Papiermark)");
+    expect(html).toContain("Greek drachma");
+    expect(html).not.toContain("Peak inflation");
+    expect(html).not.toContain("Purchasing power loss");
+  });
+
+  it("does not expose an email submission form", () => {
+    expect(html).toContain("Watchlist intake offline");
+    expect(html).not.toContain("<form");
+    expect(html).not.toContain('type="email"');
+  });
+
+  it("provides semantic descriptions for the table and chart", () => {
+    expect(html).toContain('aria-label="Currency comparison table"');
+    expect(html).toContain("Illustrative lifespan distribution");
+    expect(html).toContain("Six outlined bars rise to the third bin");
+  });
+});
