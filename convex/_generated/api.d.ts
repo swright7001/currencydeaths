@@ -9,9 +9,11 @@
  */
 
 import type * as dollarMetrics from "../dollarMetrics.js";
+import type * as http from "../http.js";
 import type * as research from "../research.js";
 import type * as seedVerifiedCurrencies from "../seedVerifiedCurrencies.js";
 import type * as validators from "../validators.js";
+import type * as watchlist from "../watchlist.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +23,11 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   dollarMetrics: typeof dollarMetrics;
+  http: typeof http;
   research: typeof research;
   seedVerifiedCurrencies: typeof seedVerifiedCurrencies;
   validators: typeof validators;
+  watchlist: typeof watchlist;
 }>;
 
 /**
