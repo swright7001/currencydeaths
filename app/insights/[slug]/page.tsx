@@ -43,12 +43,12 @@ export default async function InsightArticlePage({ params }: InsightPageProps) {
       <header className="insight-article-hero">
         <div className="shell-container">
           <Link href="/insights">← Return to insights</Link>
-          <p className="section-kicker">{article.category} / development research note</p>
+          <p className="section-kicker">{article.category} / independently reviewed research note</p>
           <h1>{article.title}</h1>
           <p>{article.dek}</p>
           <dl>
             <div><dt>Published</dt><dd>{article.publishedDate}</dd></div>
-            <div><dt>Status</dt><dd>Development draft — editorial review pending</dd></div>
+            <div><dt>Reviewed</dt><dd>{article.editorialReview.reviewedDate}</dd></div>
             <div><dt>Updated</dt><dd>{article.updatedDate}</dd></div>
             <div><dt>Reading time</dt><dd>{article.readingMinutes} minutes</dd></div>
           </dl>

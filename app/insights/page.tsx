@@ -23,10 +23,10 @@ export default function InsightsPage() {
       <section className="shell-container insights-index" aria-labelledby="insights-index-title">
         <header>
           <div>
-            <p className="section-kicker">Development notes</p>
+            <p className="section-kicker">Reviewed notes</p>
             <h2 id="insights-index-title">The research desk</h2>
           </div>
-          <p>{insightArticles.length} development draft / claim-level citations required</p>
+          <p>{insightArticles.length} published / claim-level citations required</p>
         </header>
         <div className="insights-grid">
           {insightArticles.map((article) => <InsightCard key={article.slug} article={article} />)}

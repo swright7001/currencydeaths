@@ -32,7 +32,11 @@ export type InsightArticle = Readonly<{
   readingMinutes: number;
   publishedDate: string;
   updatedDate: string;
-  editorialStatus: "development-draft";
+  editorialReview: Readonly<{
+    status: "approved";
+    reviewedDate: string;
+    reviewedContentSha: string;
+  }>;
   sections: readonly InsightSection[];
   relatedMethodologies: readonly Readonly<{ title: string; href: string; note: string }>[];
 }>;
@@ -50,7 +54,11 @@ export const insightArticles: readonly InsightArticle[] = [
     readingMinutes: 6,
     publishedDate: "2026-08-11",
     updatedDate: "2026-08-11",
-    editorialStatus: "development-draft",
+    editorialReview: {
+      status: "approved",
+      reviewedDate: "2026-08-11",
+      reviewedContentSha: "5f63d4b2181ddeaee67f64b71bd23404256bd27b",
+    },
     sections: [
       {
         id: "the-distinction",
@@ -144,6 +152,9 @@ export function validateInsightArticles(articles: readonly InsightArticle[]): vo
   for (const article of articles) {
     if (slugs.has(article.slug)) throw new Error(`Duplicate insight slug: ${article.slug}`);
     slugs.add(article.slug);
+    if (!/^[0-9a-f]{40}$/.test(article.editorialReview.reviewedContentSha)) {
+      throw new Error(`Invalid editorial review SHA: ${article.slug}`);
+    }
     for (const section of article.sections) {
       if (section.kind !== "fact") continue;
       for (const claim of section.claims) {

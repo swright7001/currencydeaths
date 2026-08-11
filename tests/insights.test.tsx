@@ -7,10 +7,13 @@ import { getInsightArticle, getInsightSources, insightArticles, validateInsightA
 const slug = "currency-endings-are-not-all-collapses";
 
 describe("insight editorial model", () => {
-  it("publishes one development draft with enforced fact and interpretation blocks", () => {
+  it("publishes one reviewed article with enforced fact and interpretation blocks", () => {
     const article = getInsightArticle(slug);
     expect(article).toBeDefined();
-    expect(article?.editorialStatus).toBe("development-draft");
+    expect(article?.editorialReview).toMatchObject({
+      status: "approved",
+      reviewedContentSha: "5f63d4b2181ddeaee67f64b71bd23404256bd27b",
+    });
     expect(article?.sections.some((section) => section.kind === "fact")).toBe(true);
     expect(article?.sections.some((section) => section.kind === "interpretation")).toBe(true);
     for (const section of article?.sections ?? []) {
@@ -47,7 +50,7 @@ describe("insights routes", () => {
     const html = renderToStaticMarkup(await InsightArticlePage({ params: Promise.resolve({ slug }) }));
     expect(html).toContain("Sourced fact");
     expect(html).toContain("Interpretation");
-    expect(html).toContain("Development draft — editorial review pending");
+    expect(html).toContain("independently reviewed research note");
     expect(html).toContain('aria-label="Article contents"');
     expect(html).toContain("Source for claim: The Bank of Greece records the drachma");
     expect(html).toContain("The Bank of Greece records the drachma");
