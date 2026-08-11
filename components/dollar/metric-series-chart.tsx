@@ -32,7 +32,7 @@ export function MetricSeriesChart({ metric }: MetricSeriesChartProps) {
       title={metric.label}
       description={description}
       state="fixture"
-      eyebrow={`${metric.source.sourceSeriesId} / ${metric.latest.frequency}`}
+      eyebrow={`${metric.latest.sourceSeriesId} / ${metric.latest.frequency}`}
       legend={[{ label: "Development fixture", marker: "line", tone: "signal" }]}
     >
       <svg viewBox="0 0 640 210" role="img" aria-label={description}>

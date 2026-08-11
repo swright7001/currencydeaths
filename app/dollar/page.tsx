@@ -36,7 +36,7 @@ export default function DollarDashboardPage() {
             <span>Development data only</span>
             <dl>
               <div><dt>Fixture version</dt><dd>{dashboard.fixtureVersion}</dd></div>
-              <div><dt>Accessed</dt><dd>{formatUtcDate(dashboard.accessedAt)}</dd></div>
+              <div><dt>Freshness evaluated</dt><dd>{formatUtcDate(dashboard.freshnessAsOf)}</dd></div>
               <div><dt>Approved series</dt><dd>{dashboard.metrics.length}</dd></div>
               <div><dt>Live ingestion</dt><dd>Offline</dd></div>
             </dl>
@@ -84,7 +84,7 @@ export default function DollarDashboardPage() {
                 value={metric.displayValue}
                 unit={metric.unitLabel}
                 state="fixture"
-                detail={`Observation ${formatHistoricalMonth(metric.latest.observationDate)} · source updated ${formatUtcDate(metric.latest.sourceUpdatedAt)} · source freshness ${metric.freshness.state} (${metric.freshness.ageDays}/${metric.freshness.thresholdDays}-day window).`}
+                detail={`Observation ${formatHistoricalMonth(metric.latest.observationDate)} · source updated ${formatUtcDate(metric.latest.sourceUpdatedAt)} · freshness at fixture access: ${metric.freshness.state} (${metric.freshness.ageDays}/${metric.freshness.thresholdDays}-day window).`}
                 accessory={<MetricTrend direction={metric.trend} value={metric.trendValue} context={metric.trendContext} tone="neutral" />}
               />
               <SourceCitation
@@ -92,10 +92,10 @@ export default function DollarDashboardPage() {
                 ariaLabel={`${metric.label} source citation`}
                 claim={`${metric.observations.length} stored ${metric.latest.frequency} observations. Values may be revised; consult the source.`}
                 source={{
-                  title: `${metric.source.title} · ${metric.source.sourceSeriesId}`,
+                  title: `${metric.source.title} · ${metric.latest.sourceSeriesId}`,
                   publisher: metric.source.publisher,
                   url: metric.source.url,
-                  accessedDate: formatUtcDate(dashboard.accessedAt),
+                  accessedDate: formatUtcDate(metric.source.accessedAt),
                 }}
               />
             </div>
