@@ -1,7 +1,9 @@
 import {
   dollarMetricDefinitions,
   type DollarMetricKey,
+  type DollarMetricUnit,
 } from "../data/dollar-metric-contracts";
+import { assertIsoCalendarDate } from "../data/iso-calendar-date";
 
 export const dollarStressComponentIds = [
   "monetary_expansion",
@@ -10,15 +12,60 @@ export const dollarStressComponentIds = [
 ] as const;
 
 export type DollarStressComponentId = (typeof dollarStressComponentIds)[number];
+export type DollarStressOutputUnit =
+  | "percent_change_year_over_year"
+  | "percent_gdp";
+export type DollarStressInputKind = "year_over_year_percent_change" | "direct";
+
+type ApprovedDollarStressComponentContract = Readonly<{
+  sourceMetric: DollarMetricKey;
+  sourceSeriesId: string;
+  sourceUrl: string;
+  sourceUnit: DollarMetricUnit;
+  outputUnit: DollarStressOutputUnit;
+  inputKind: DollarStressInputKind;
+}>;
+
+export const approvedDollarStressComponentContracts = {
+  monetary_expansion: {
+    sourceMetric: "m2",
+    sourceSeriesId: "M2SL",
+    sourceUrl: "https://fred.stlouisfed.org/series/M2SL",
+    sourceUnit: "billions_usd_seasonally_adjusted",
+    outputUnit: "percent_change_year_over_year",
+    inputKind: "year_over_year_percent_change",
+  },
+  consumer_price_inflation: {
+    sourceMetric: "cpi",
+    sourceSeriesId: "CPIAUCSL",
+    sourceUrl: "https://fred.stlouisfed.org/series/CPIAUCSL",
+    sourceUnit: "index_1982_1984_100_seasonally_adjusted",
+    outputUnit: "percent_change_year_over_year",
+    inputKind: "year_over_year_percent_change",
+  },
+  federal_debt_burden: {
+    sourceMetric: "federal_debt_to_gdp",
+    sourceSeriesId: "GFDEGDQ188S",
+    sourceUrl: "https://fred.stlouisfed.org/series/GFDEGDQ188S",
+    sourceUnit: "percent_gdp_seasonally_adjusted",
+    outputUnit: "percent_gdp",
+    inputKind: "direct",
+  },
+} as const satisfies Record<
+  DollarStressComponentId,
+  ApprovedDollarStressComponentContract
+>;
 
 export type DollarStressComponentConfig = Readonly<{
   id: DollarStressComponentId;
   label: string;
+  inputLabel: string;
   sourceMetric: DollarMetricKey;
   sourceSeriesId: string;
   sourceUrl: string;
-  inputLabel: string;
-  unit: "percent_change_year_over_year" | "percent_gdp";
+  sourceUnit: DollarMetricUnit;
+  outputUnit: DollarStressOutputUnit;
+  inputKind: DollarStressInputKind;
   transform: "linear_clamped";
   healthyBoundary: number;
   extremeBoundary: number;
@@ -42,6 +89,10 @@ export type DollarStressMethodology = Readonly<{
   }>[];
 }>;
 
+const monetaryExpansionContract = approvedDollarStressComponentContracts.monetary_expansion;
+const inflationContract = approvedDollarStressComponentContracts.consumer_price_inflation;
+const debtContract = approvedDollarStressComponentContracts.federal_debt_burden;
+
 export const experimentalDollarStressMethodology = {
   version: "usd-stress-experimental-0.1.0",
   status: "experimental_not_production_approved",
@@ -53,11 +104,8 @@ export const experimentalDollarStressMethodology = {
     {
       id: "monetary_expansion",
       label: "Monetary expansion",
-      sourceMetric: "m2",
-      sourceSeriesId: "M2SL",
-      sourceUrl: "https://fred.stlouisfed.org/series/M2SL",
       inputLabel: "M2 year-over-year change",
-      unit: "percent_change_year_over_year",
+      ...monetaryExpansionContract,
       transform: "linear_clamped",
       healthyBoundary: -5,
       extremeBoundary: 25,
@@ -68,11 +116,8 @@ export const experimentalDollarStressMethodology = {
     {
       id: "consumer_price_inflation",
       label: "Consumer-price inflation",
-      sourceMetric: "cpi",
-      sourceSeriesId: "CPIAUCSL",
-      sourceUrl: "https://fred.stlouisfed.org/series/CPIAUCSL",
       inputLabel: "CPI year-over-year change",
-      unit: "percent_change_year_over_year",
+      ...inflationContract,
       transform: "linear_clamped",
       healthyBoundary: 0,
       extremeBoundary: 15,
@@ -83,11 +128,8 @@ export const experimentalDollarStressMethodology = {
     {
       id: "federal_debt_burden",
       label: "Federal debt burden",
-      sourceMetric: "federal_debt_to_gdp",
-      sourceSeriesId: "GFDEGDQ188S",
-      sourceUrl: "https://fred.stlouisfed.org/series/GFDEGDQ188S",
       inputLabel: "Federal debt as a share of GDP",
-      unit: "percent_gdp",
+      ...debtContract,
       transform: "linear_clamped",
       healthyBoundary: 40,
       extremeBoundary: 180,
@@ -100,7 +142,7 @@ export const experimentalDollarStressMethodology = {
     "The boundaries and weights are research assumptions awaiting owner approval for any production label.",
     "Three indicators cannot capture institutions, policy credibility, reserve demand, political conditions, or market structure.",
     "A similar score in two periods does not imply the same cause, path, timing, or outcome.",
-    "Source series may be revised. A score must retain its model version, input observations, and as-of date.",
+    "Source series may be revised. A score must retain its model version, both observations for derived rates, and its as-of date.",
     "The score measures selected historical stress signals; it is not a probability and does not predict a currency death date.",
   ],
   changeHistory: [
@@ -117,9 +159,7 @@ export function validateDollarStressMethodology(
   methodology: DollarStressMethodology,
 ) {
   if (!methodology.version.trim()) throw new Error("Methodology version is required.");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(methodology.asOf)) {
-    throw new Error("Methodology as-of date must use YYYY-MM-DD.");
-  }
+  assertIsoCalendarDate(methodology.asOf, "Methodology as-of date");
   if (methodology.components.length === 0) {
     throw new Error("Methodology requires at least one component.");
   }
@@ -139,11 +179,20 @@ export function validateDollarStressMethodology(
     ) {
       throw new Error(`Component ${component.id} has invalid normalization boundaries.`);
     }
+
+    const approved = approvedDollarStressComponentContracts[component.id];
     if (
+      component.sourceMetric !== approved.sourceMetric ||
+      component.sourceSeriesId !== approved.sourceSeriesId ||
+      component.sourceUrl !== approved.sourceUrl ||
+      component.sourceUnit !== approved.sourceUnit ||
+      component.outputUnit !== approved.outputUnit ||
+      component.inputKind !== approved.inputKind ||
       component.sourceSeriesId !==
-      dollarMetricDefinitions[component.sourceMetric].sourceSeriesId
+        dollarMetricDefinitions[component.sourceMetric].sourceSeriesId ||
+      component.sourceUnit !== dollarMetricDefinitions[component.sourceMetric].unit
     ) {
-      throw new Error(`Component ${component.id} has an invalid source-series contract.`);
+      throw new Error(`Component ${component.id} violates its approved identity contract.`);
     }
     weightTotal += component.weight;
   }

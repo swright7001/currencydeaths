@@ -15,6 +15,8 @@ describe("dollar stress methodology route", () => {
     expect(html).toContain("Not production approved");
     expect(html).toContain("usd-stress-experimental-0.1.0");
     expect(html).toContain("Normalize. Weight. Add.");
+    expect(html).toContain("same month prior year");
+    expect(html).toContain("source-update and access timestamps");
     expect(html).toContain("Withhold the score.");
     expect(html).toContain("Calculate, then flag.");
     expect(html).toContain("FRED M2SL source");

@@ -13,6 +13,12 @@ function formatUnit(unit: string) {
   return unit === "percent_gdp" ? "% of GDP" : "% change / year";
 }
 
+function formatDerivation(kind: string) {
+  return kind === "year_over_year_percent_change"
+    ? "((current ÷ same month prior year) − 1) × 100"
+    : "Source value used directly";
+}
+
 export default function DollarStressScoreMethodologyPage() {
   const methodology = experimentalDollarStressMethodology;
 
@@ -53,6 +59,10 @@ export default function DollarStressScoreMethodologyPage() {
           boundary, then clamped to 0–100. Its normalized value is multiplied by
           the listed weight. The final sum is rounded once to one decimal place.
         </p>
+        <p>
+          Derived rates retain both raw observations, their observation dates, and
+          their source-update and access timestamps so the calculation can be audited.
+        </p>
       </section>
 
       <section className="shell-container stress-methodology-section" aria-labelledby="components-title">
@@ -73,8 +83,9 @@ export default function DollarStressScoreMethodologyPage() {
               <h3>{component.inputLabel}</h3>
               <dl>
                 <div><dt>Weight</dt><dd className="metric-numerals">{component.weight * 100}%</dd></div>
-                <div><dt>0-point boundary</dt><dd className="metric-numerals">{component.healthyBoundary} {formatUnit(component.unit)}</dd></div>
-                <div><dt>100-point boundary</dt><dd className="metric-numerals">{component.extremeBoundary} {formatUnit(component.unit)}</dd></div>
+                <div><dt>Input derivation</dt><dd>{formatDerivation(component.inputKind)}</dd></div>
+                <div><dt>0-point boundary</dt><dd className="metric-numerals">{component.healthyBoundary} {formatUnit(component.outputUnit)}</dd></div>
+                <div><dt>100-point boundary</dt><dd className="metric-numerals">{component.extremeBoundary} {formatUnit(component.outputUnit)}</dd></div>
                 <div><dt>Transform</dt><dd>Linear, clamped</dd></div>
               </dl>
               <p>{component.rationale}</p>
