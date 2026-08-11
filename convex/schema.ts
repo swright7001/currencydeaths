@@ -22,10 +22,12 @@ export default defineSchema({
     notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
+    seedVersion: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_iso_code", ["isoCode"])
-    .index("by_region", ["region"]),
+    .index("by_region", ["region"])
+    .index("by_seed_version", ["seedVersion"]),
 
   sources: defineTable({
     title: v.string(),
@@ -36,7 +38,10 @@ export default defineSchema({
     sourceType: sourceTypeValidator,
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_url", ["url"]),
+    seedVersion: v.optional(v.string()),
+  })
+    .index("by_url", ["url"])
+    .index("by_seed_version", ["seedVersion"]),
 
   currencies: defineTable({
     name: v.string(),
@@ -48,6 +53,7 @@ export default defineSchema({
     startDate: historicalDateValidator,
     endDate: v.optional(historicalDateValidator),
     replacementCurrencyId: v.optional(v.id("currencies")),
+    replacementCurrencyName: v.optional(v.string()),
     primaryFailureCause: v.optional(failureCauseValidator),
     failureCauses: v.array(failureCauseValidator),
     summary: v.optional(v.string()),
@@ -56,11 +62,13 @@ export default defineSchema({
     recordState: recordStateValidator,
     createdAt: v.number(),
     updatedAt: v.number(),
+    seedVersion: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_country_id_and_status", ["countryId", "status"])
     .index("by_status", ["status"])
-    .index("by_primary_failure_cause", ["primaryFailureCause"]),
+    .index("by_primary_failure_cause", ["primaryFailureCause"])
+    .index("by_seed_version", ["seedVersion"]),
 
   currencyEvents: defineTable({
     currencyId: v.id("currencies"),

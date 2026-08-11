@@ -9,6 +9,7 @@
  */
 
 import type * as research from "../research.js";
+import type * as seedVerifiedCurrencies from "../seedVerifiedCurrencies.js";
 import type * as validators from "../validators.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   research: typeof research;
+  seedVerifiedCurrencies: typeof seedVerifiedCurrencies;
   validators: typeof validators;
 }>;
 
