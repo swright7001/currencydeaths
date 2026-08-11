@@ -134,7 +134,10 @@ describe("monetary-history storage contracts", () => {
       metric: "m2",
       observationDate: { year: 2026, month: 7, precision: "month" },
       value: 1,
-      unit: "fixture_index",
+      unit: "billions_usd_seasonally_adjusted",
+      frequency: "monthly",
+      sourceSeriesId: "M2SL",
+      sourceUpdatedAt: Date.UTC(2026, 7, 1),
       sourceId,
       recordState: "development_fixture",
     });
@@ -198,13 +201,16 @@ describe("monetary-history storage contracts", () => {
 
     await expect(
       t.mutation(internal.research.createDollarMetric, {
-        metric: "invalid_metric",
-        observationDate: { year: 1990, precision: "year" },
+        metric: "m2",
+        observationDate: { year: 1990, month: 1, precision: "month" },
         value: Number.NaN,
-        unit: "fixture",
+        unit: "billions_usd_seasonally_adjusted",
+        frequency: "monthly",
+        sourceSeriesId: "M2SL",
+        sourceUpdatedAt: Date.UTC(1990, 1, 1),
         sourceId,
         recordState: "development_fixture",
       }),
-    ).rejects.toThrow("Metric value must be a finite number");
+    ).rejects.toThrow("Dollar metric value must be a finite number");
   });
 });

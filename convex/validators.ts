@@ -87,6 +87,23 @@ export const recordStateValidator = v.union(
   v.literal("verified"),
 );
 
+export const dollarMetricKeyValidator = v.union(
+  v.literal("m2"),
+  v.literal("cpi"),
+  v.literal("federal_debt_to_gdp"),
+);
+
+export const dollarMetricFrequencyValidator = v.union(
+  v.literal("monthly"),
+  v.literal("quarterly"),
+);
+
+export const dollarMetricUnitValidator = v.union(
+  v.literal("billions_usd_seasonally_adjusted"),
+  v.literal("index_1982_1984_100_seasonally_adjusted"),
+  v.literal("percent_gdp_seasonally_adjusted"),
+);
+
 export const subscriberStatusValidator = v.union(
   v.literal("pending"),
   v.literal("active"),

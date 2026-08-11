@@ -3,11 +3,15 @@ import {
   historicalDateToBounds,
   historicalDateToKey,
 } from "../lib/data/historical-date";
+import { validateDollarMetricObservation } from "../lib/data/dollar-metric-contracts";
 import { internalMutation, query } from "./_generated/server";
 import {
   currencyEventTypeValidator,
   currencyStatusValidator,
   currencyTypeValidator,
+  dollarMetricFrequencyValidator,
+  dollarMetricKeyValidator,
+  dollarMetricUnitValidator,
   failureCauseValidator,
   historicalDateValidator,
   recordStateValidator,
@@ -261,10 +265,14 @@ export const createCurrencyMetric = internalMutation({
 
 export const createDollarMetric = internalMutation({
   args: {
-    metric: v.string(),
+    metric: dollarMetricKeyValidator,
     observationDate: historicalDateValidator,
     value: v.number(),
-    unit: v.string(),
+    unit: dollarMetricUnitValidator,
+    frequency: dollarMetricFrequencyValidator,
+    sourceSeriesId: v.string(),
+    sourceUpdatedAt: v.number(),
+    fixtureBatchVersion: v.optional(v.string()),
     sourceId: v.id("sources"),
     notes: v.optional(v.string()),
     recordState: recordStateValidator,
@@ -272,7 +280,11 @@ export const createDollarMetric = internalMutation({
   returns: v.id("dollarMetrics"),
   handler: async (ctx, args) => {
     const observationDateKey = historicalDateToKey(args.observationDate);
-    requireFiniteMetricValue(args.value);
+    try {
+      validateDollarMetricObservation(args);
+    } catch (error) {
+      throw new ConvexError(error instanceof Error ? error.message : "Invalid dollar metric.");
+    }
     if ((await ctx.db.get(args.sourceId)) === null) {
       throw new ConvexError("Referenced source does not exist.");
     }
@@ -392,7 +404,7 @@ export const getLatestCurrencyMetric = query({
 });
 
 export const getLatestDollarMetric = query({
-  args: { metric: v.string() },
+  args: { metric: dollarMetricKeyValidator },
   returns: v.union(v.null(), metricWithSourceValidator),
   handler: async (ctx, args) => {
     const observation = await ctx.db
