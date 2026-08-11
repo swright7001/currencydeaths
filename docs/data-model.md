@@ -16,13 +16,15 @@ The current date contract supports years 1–9999. Earlier historical eras requi
 - `currencyType` distinguishes fiat, commodity-backed, union, colonial, transitional, and other systems. It prevents fiat-specific conclusions from being applied to unlike systems.
 - `primaryFailureCause` is optional. `failureCauses` can contain multiple supported contributing classifications. Absence means unclassified, not “none.”
 - `recordState` is either `development_fixture` or `verified`. Verified currencies and events require at least one source. Development fixtures must remain visibly identified by consumers.
+- `seedVersion` is optional ownership metadata used only by reviewed, version-pinned seed operations. A seed must refuse collisions with non-seed records and must never imply that a local seed was imported to production.
+- `replacementCurrencyName` preserves a researched successor when the successor does not yet have its own currency record. `replacementCurrencyId` remains available for a later normalized relationship.
 - Metrics exist only when an observation exists. Their observation dates carry the same year/month/day precision as historical records, and values must be finite numbers. Query contracts return `null` when an observation or optional field is unavailable; they never coerce missing data to zero or invent calendar precision.
 
 ## Provenance and references
 
 Currency records and events cite bounded arrays of source IDs. Metric observations cite one source. Public research queries resolve those references and return publisher, URL, publication precision, access time, and source type with the value.
 
-Ingestion mutations are internal. They reject duplicate slugs/URLs, missing country/currency/source references, invalid date precision, end dates before start dates, unsourced verified records, and invalid ISO observation dates. There are no deletion mutations in this issue, which avoids creating dangling research references.
+Ingestion mutations are internal. They reject duplicate slugs/URLs, missing country/currency/source references, invalid date precision, end dates before start dates, unsourced verified records, and invalid ISO observation dates. The only deletion boundary is the version-pinned local seed rollback documented in [verified-currency-seed-v1.md](./verified-currency-seed-v1.md); general research deletion remains unavailable.
 
 ## Index policy
 
