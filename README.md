@@ -10,7 +10,7 @@ The current repository contains only the application foundation. It does not pub
 - Tailwind CSS
 - Convex for future database and backend functions
 - Vercel for future hosting
-- Resend for a future unauthenticated watchlist
+- Resend for the unauthenticated, double-opt-in research watchlist
 - GitHub and Linear for source control and project management
 
 Clerk, Stripe, third-party analytics, and automated financial alerts are intentionally deferred.
@@ -40,6 +40,15 @@ npx convex dev
 The Convex CLI fills `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL` in `.env.local`. Never commit `.env.local` or deployment credentials. Commit the generated `convex/_generated` types after running codegen; application TypeScript depends on them once functions are added.
 
 If code requires a configured backend, use `requireConvexUrl` from `lib/env/convex.ts`. It throws a specific setup error when the URL is missing or malformed rather than connecting to a fabricated endpoint.
+
+## Watchlist configuration
+
+The watchlist uses a Next.js Server Action as its public boundary, authenticated Convex HTTP actions for persistence, and Resend for confirmation mail. It fails closed before storing an address when required configuration is absent. Configure these values only in approved environments:
+
+- Next.js server: `WATCHLIST_CONVEX_SITE_URL`, `WATCHLIST_ACTION_SECRET`
+- Convex: `WATCHLIST_ACTION_SECRET`, `SUBSCRIBER_HASH_SECRET`, `RESEND_API_KEY`, `WATCHLIST_FROM_EMAIL`, `WATCHLIST_PUBLIC_URL`
+
+`WATCHLIST_ACTION_SECRET`, `SUBSCRIBER_HASH_SECRET`, and `RESEND_API_KEY` are secrets. Never prefix them with `NEXT_PUBLIC`, expose them to client components, or commit their values. `WATCHLIST_PUBLIC_URL` must be the origin used in confirmation and unsubscribe links. Provider/domain setup and live sending require separate approval.
 
 ## Required quality gate
 

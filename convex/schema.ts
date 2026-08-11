@@ -140,9 +140,26 @@ export default defineSchema({
     status: subscriberStatusValidator,
     source: subscriberSourceValidator,
     verifiedAt: v.optional(v.number()),
+    consentVersion: v.optional(v.string()),
+    consentAt: v.optional(v.number()),
+    verificationTokenHash: v.optional(v.string()),
+    verificationTokenExpiresAt: v.optional(v.number()),
+    unsubscribeTokenHash: v.optional(v.string()),
+    confirmationAttemptedAt: v.optional(v.number()),
+    confirmationSentAt: v.optional(v.number()),
+    confirmationAttemptCount: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_email_hash", ["emailHash"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_verification_token_hash", ["verificationTokenHash"])
+    .index("by_unsubscribe_token_hash", ["unsubscribeTokenHash"]),
+
+  watchlistRateLimits: defineTable({
+    requestHash: v.string(),
+    windowStartedAt: v.number(),
+    attempts: v.number(),
+    updatedAt: v.number(),
+  }).index("by_request_hash", ["requestHash"]),
 });

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeathClock } from "../components/home/death-clock";
+import { EmailSignup } from "../components/home/email-signup";
 import { CurrencyRecordCard } from "../components/home/currency-record-card";
 import {
   UsdComparison,
@@ -229,15 +230,11 @@ export default function Home() {
       <section className="watchlist-teaser" id="watchlist" aria-labelledby="watchlist-title">
         <div className="shell-container watchlist-teaser__grid">
           <div>
-            <p className="section-kicker">Research dispatches / planned</p>
+            <p className="section-kicker">Research dispatches / double opt-in</p>
             <h2 id="watchlist-title">Watch the evidence, not the spectacle.</h2>
           </div>
-          <p>
-            Email signup arrives in the approved watchlist issue. No address is collected by this static preview.
-          </p>
-          <span className="watchlist-teaser__status" aria-label="Watchlist signup is not yet available">
-            Watchlist intake offline
-          </span>
+          <p>Join for sourced research notes and product updates. This is not an automated financial-alert service.</p>
+          <EmailSignup />
         </div>
       </section>
     </main>

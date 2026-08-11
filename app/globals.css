@@ -2789,17 +2789,137 @@ summary {
   background: #060808;
 }
 
-.watchlist-teaser__status {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 0.9rem;
-  border: 1px dashed var(--color-border-strong);
+.email-signup {
+  display: grid;
+  width: min(100%, 32rem);
+  gap: 0.75rem;
+}
+
+.email-signup__field > label,
+.email-signup__consent {
+  color: var(--color-text-secondary);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+}
+
+.email-signup__field > label {
+  display: block;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.email-signup__field > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.email-signup input[type="email"] {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-strong);
+  border-right: 0;
+  background: #080a0a;
+  color: var(--color-text-primary);
+  font: 0.72rem var(--font-geist-mono), monospace;
+}
+
+.email-signup button,
+.watchlist-token-form button {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-signal);
+  background: rgb(228 56 34 / 8%);
+  color: var(--color-signal-bright);
+  cursor: pointer;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.68rem;
+  font-weight: 680;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.email-signup button:disabled,
+.watchlist-token-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.email-signup__consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
+  align-items: start;
+  line-height: 1.5;
+}
+
+.email-signup__consent input {
+  margin-top: 0.1rem;
+  accent-color: var(--color-signal-bright);
+}
+
+.email-signup__honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.email-signup__status,
+.watchlist-token-form p {
+  min-height: 1.25rem;
+  margin: 0;
   color: var(--color-text-muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
+  font-size: 0.58rem;
+  line-height: 1.5;
+}
+
+.email-signup__status[data-state="confirmed"],
+.email-signup__status[data-state="accepted"],
+.watchlist-token-form p[data-state="confirmed"] {
+  color: var(--color-signal-bright);
+}
+
+.watchlist-token-page {
+  display: grid;
+  min-height: 72vh;
+  place-items: center;
+  padding-block: clamp(4rem, 10vw, 8rem);
+  background: radial-gradient(circle at 70% 20%, rgb(228 56 34 / 8%), transparent 36%);
+}
+
+.watchlist-token-page .shell-container {
+  width: min(100%, 48rem);
+}
+
+.watchlist-token-page h1 {
+  max-width: 12ch;
+  margin: var(--space-3) 0;
+  font-size: clamp(3rem, 8vw, 6rem);
+}
+
+.watchlist-token-page .shell-container > p:not(.section-kicker) {
+  max-width: 38rem;
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.watchlist-token-form {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+  margin-block: var(--space-6);
+  padding-block: var(--space-6);
+  border-block: 1px solid var(--color-border);
+}
+
+.watchlist-token-page a {
+  color: var(--color-signal-bright);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -3135,6 +3255,15 @@ summary {
   .homepage-methodology__grid,
   .watchlist-teaser__grid {
     grid-template-columns: 1fr;
+  }
+
+  .email-signup__field > div {
+    grid-template-columns: 1fr;
+  }
+
+  .email-signup input[type="email"] {
+    border-right: 1px solid var(--color-border-strong);
+    border-bottom: 0;
   }
 
   .homepage-metric-grid > :last-child {

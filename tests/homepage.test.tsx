@@ -42,10 +42,12 @@ describe("cinematic homepage shell", () => {
     expect(html).not.toContain("Purchasing power loss");
   });
 
-  it("does not expose an email submission form", () => {
-    expect(html).toContain("Watchlist intake offline");
-    expect(html).not.toContain("<form");
-    expect(html).not.toContain('type="email"');
+  it("renders an explicit-consent double-opt-in form", () => {
+    expect(html).toContain("Double opt-in required");
+    expect(html).toContain("No financial alerts yet");
+    expect(html).toContain("<form");
+    expect(html).toContain('type="email"');
+    expect(html).toContain('name="consent"');
   });
 
   it("provides semantic descriptions for the table and chart", () => {
