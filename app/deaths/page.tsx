@@ -10,9 +10,10 @@ import {
 } from "../../lib/data/currency-archive";
 
 export const metadata: Metadata = {
-  title: "Historical Currency Archive | CurrencyDeaths",
+  title: "Historical Currency Archive",
   description:
     "Explore a source-disciplined seed archive of historical currency replacements, redenominations, and collapses.",
+  alternates: { canonical: "/deaths" },
 };
 
 export default async function DeathsPage({

@@ -4,9 +4,10 @@ import { unsubscribeWatchlist } from "../../actions/watchlist";
 import { TokenActionForm } from "../../../components/watchlist/token-action-form";
 
 export const metadata: Metadata = {
-  title: "Leave Watchlist | CurrencyDeaths",
+  title: "Leave Watchlist",
   description: "Process a CurrencyDeaths watchlist unsubscribe request.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "/watchlist/unsubscribe" },
   referrer: "no-referrer",
 };
 

@@ -12,9 +12,9 @@
   --color-text-primary: #f1eee8;
   --color-text-secondary: #9a9a95;
   --color-text-muted: #7d817e;
-  --color-signal: #e43822;
+  --color-signal: #eb4129;
   --color-signal-bright: #ff4a2d;
-  --color-burnt-orange: #c85b23;
+  --color-burnt-orange: #d6652c;
   --color-caution: #e38a3a;
   --color-positive: #6fae8a;
   --color-fixture: #9b8dc7;
@@ -4726,6 +4726,33 @@ summary {
   margin-top: var(--space-5);
   padding: 0.65rem 1rem;
   cursor: pointer;
+}
+
+.global-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.global-state-actions a,
+.global-state-actions button {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-border-strong);
+  background: rgb(228 56 34 / 7%);
+  color: var(--color-text-primary);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 680;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.global-state-actions a:hover,
+.global-state-actions button:hover {
+  border-color: var(--color-signal-bright);
+  color: var(--color-signal-bright);
 }
 
 @media (max-width: 64rem) {

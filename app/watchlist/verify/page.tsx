@@ -4,9 +4,10 @@ import { confirmWatchlist } from "../../actions/watchlist";
 import { TokenActionForm } from "../../../components/watchlist/token-action-form";
 
 export const metadata: Metadata = {
-  title: "Confirm Watchlist | CurrencyDeaths",
+  title: "Confirm Watchlist",
   description: "Confirm a CurrencyDeaths research watchlist request.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "/watchlist/verify" },
   referrer: "no-referrer",
 };
 

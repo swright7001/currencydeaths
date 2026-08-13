@@ -11,7 +11,7 @@ import {
 } from "../../lib/data/dollar-dashboard";
 
 export const metadata: Metadata = {
-  title: "U.S. Dollar Research Dashboard | CurrencyDeaths",
+  title: "U.S. Dollar Research Dashboard",
   description:
     "Inspect source-attributed development fixtures for M2, CPI, federal debt-to-GDP, and the experimental Dollar Stress Score methodology.",
   alternates: { canonical: "/dollar" },

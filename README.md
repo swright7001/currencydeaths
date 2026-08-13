@@ -26,6 +26,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+Search metadata, JSON-LD, the sitemap, and robots output use
+
+`CURRENCYDEATHS_SITE_URL` as their canonical origin. Leave it unset locally for
+the deterministic `http://localhost:3000` fallback. Configure it only after a
+public HTTPS origin has been explicitly approved; preview URLs must not be
+silently promoted to the production canonical origin.
+
 ## Local Convex setup
 
 Convex is wired into the application but no cloud project or deployment is committed or implied. The current static placeholder runs without Convex configuration.

@@ -1,4 +1,5 @@
 import type { SourceReference } from "../../components/research";
+import { absoluteSiteUrl } from "../site-url";
 import { verifiedCurrencySeed } from "./verified-currency-seed";
 
 type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
@@ -177,6 +178,6 @@ export function createInsightStructuredData(article: InsightArticle) {
     dateModified: article.updatedDate,
     author: { "@type": "Organization", name: "CurrencyDeaths Research" },
     publisher: { "@type": "Organization", name: "CurrencyDeaths" },
-    mainEntityOfPage: `/insights/${article.slug}`,
+    mainEntityOfPage: absoluteSiteUrl(`/insights/${article.slug}`),
   } as const;
 }

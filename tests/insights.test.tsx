@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import InsightsPage from "../app/insights/page";
 import InsightArticlePage, { generateMetadata, generateStaticParams } from "../app/insights/[slug]/page";
-import { getInsightArticle, getInsightSources, insightArticles, validateInsightArticles } from "../lib/data/insights";
+import { createInsightStructuredData, getInsightArticle, getInsightSources, insightArticles, validateInsightArticles } from "../lib/data/insights";
 
 const slug = "currency-endings-are-not-all-collapses";
 
@@ -36,6 +36,14 @@ describe("insight editorial model", () => {
     expect(getInsightArticle("not-real")).toBeUndefined();
     expect(insightArticles).toHaveLength(1);
   });
+
+  it("uses an absolute, centralized article URL in supported structured data", () => {
+    const structuredData = createInsightStructuredData(getInsightArticle(slug)!);
+    expect(structuredData.mainEntityOfPage).toBe(
+      `http://localhost:3000/insights/${slug}`,
+    );
+    expect(structuredData).not.toHaveProperty("aggregateRating");
+  });
 });
 
 describe("insights routes", () => {
@@ -61,7 +69,7 @@ describe("insights routes", () => {
   it("generates one static route and article metadata", async () => {
     expect(generateStaticParams()).toEqual([{ slug }]);
     const metadata = await generateMetadata({ params: Promise.resolve({ slug }) });
-    expect(metadata.title).toBe("A currency can end without collapsing | CurrencyDeaths");
+    expect(metadata.title).toBe("A currency can end without collapsing");
     expect(metadata.alternates).toEqual({ canonical: `/insights/${slug}` });
     expect(metadata.openGraph).toMatchObject({ type: "article", url: `/insights/${slug}` });
   });

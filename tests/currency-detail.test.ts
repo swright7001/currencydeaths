@@ -45,6 +45,7 @@ describe("currency detail research transformation", () => {
   it("keeps structured data limited to supported seed fields", () => {
     const detail = getCurrencyDetail("zimbabwe-dollar-1980")!;
     const json = JSON.stringify(createCurrencyDetailStructuredData(detail));
+    expect(json).toContain("http://localhost:3000/deaths/zimbabwe-dollar-1980");
     expect(json).toContain("Multicurrency system");
     expect(json).toContain("2009-02");
     expect(json).not.toContain("peakInflation");

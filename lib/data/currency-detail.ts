@@ -1,5 +1,6 @@
 import { currencyLifespanRange } from "./currency-lifespan";
 import type { HistoricalDate } from "./historical-date";
+import { absoluteSiteUrl } from "../site-url";
 import {
   verifiedCurrencySeed,
   type VerifiedSeedCurrency,
@@ -112,11 +113,13 @@ export function getCurrencyDetail(slug: string) {
 export type CurrencyDetail = NonNullable<ReturnType<typeof getCurrencyDetail>>;
 
 export function createCurrencyDetailStructuredData(detail: CurrencyDetail) {
+  const url = absoluteSiteUrl(`/deaths/${detail.slug}`);
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: `${detail.name} monetary history`,
     description: detail.summary,
+    url,
     mainEntity: {
       "@type": "Thing",
       name: detail.name,
