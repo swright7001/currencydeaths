@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DataStateBadge } from "../research/data-state-badge";
+import type { DataState } from "../research/presentation-types";
 
 type CurrencyRecordCardProps = Readonly<{
   name: string;
@@ -9,6 +10,7 @@ type CurrencyRecordCardProps = Readonly<{
   status: string;
   cause: string;
   summary: string;
+  evidence: Extract<DataState, "sourced" | "stale">;
 }>;
 
 export function CurrencyRecordCard({
@@ -19,12 +21,16 @@ export function CurrencyRecordCard({
   status,
   cause,
   summary,
+  evidence,
 }: CurrencyRecordCardProps) {
   return (
     <article className="currency-record-card">
       <header>
         <p>{country}</p>
-        <DataStateBadge state="sourced" label="Verified seed" />
+        <DataStateBadge
+          state={evidence}
+          label={evidence === "stale" ? "Verified seed · refresh due" : "Verified seed"}
+        />
       </header>
       <div className="currency-record-card__body">
         <h3>{name}</h3>
@@ -42,7 +48,7 @@ export function CurrencyRecordCard({
         <p className="currency-record-card__summary">{summary}</p>
       </div>
       <footer>
-        <Link href={`/deaths/${slug}`}>Research page planned →</Link>
+        <Link href={`/deaths/${slug}`}>Open research record →</Link>
       </footer>
     </article>
   );

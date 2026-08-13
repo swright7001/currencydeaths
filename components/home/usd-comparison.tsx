@@ -3,7 +3,7 @@ import { DataStateBadge } from "../research/data-state-badge";
 export type ComparisonRow = Readonly<{
   currency: string;
   period: string;
-  evidence: "fixture" | "sourced" | "unavailable";
+  evidence: "fixture" | "sourced" | "stale" | "unavailable";
   event: string;
   outcome: string;
   isDollar?: boolean;

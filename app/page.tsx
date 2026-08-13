@@ -4,68 +4,29 @@ import { EmailSignup } from "../components/home/email-signup";
 import { CurrencyRecordCard } from "../components/home/currency-record-card";
 import {
   UsdComparison,
-  type ComparisonRow,
 } from "../components/home/usd-comparison";
 import {
   ChartFrame,
+  DataStateBadge,
   MethodologyTooltip,
   MetricCard,
   MetricTrend,
-  RiskBadge,
 } from "../components/research";
-import { verifiedCurrencySeed } from "../lib/data/verified-currency-seed";
+import {
+  buildHomepageDashboard,
+  type HomepageDeliveryState,
+} from "../lib/data/homepage-dashboard";
 
-const countryNames = new Map(
-  verifiedCurrencySeed.countries.map((country) => [country.slug, country.name]),
-);
+export function Homepage({
+  deliveryState = "ready",
+}: Readonly<{ deliveryState?: HomepageDeliveryState }>) {
+  const dashboard = buildHomepageDashboard(deliveryState);
+  const maximumBandCount = Math.max(
+    1,
+    ...dashboard.lifespan.distribution.map((band) => band.count),
+    dashboard.lifespan.crossBandCount,
+  );
 
-function displayYear(date: { year: number }) {
-  return String(date.year);
-}
-
-function displayLabel(value: string) {
-  return value.replaceAll("_", " ");
-}
-
-function describeOutcome(status: string, successor: string) {
-  const statusLabel = displayLabel(status);
-  const relationship = status === "collapsed" ? "followed by" : "successor";
-
-  return `${statusLabel}; ${relationship}: ${successor}`;
-}
-
-const currencyCards = verifiedCurrencySeed.currencies.map((currency) => ({
-  name: currency.name,
-  slug: currency.slug,
-  country: countryNames.get(currency.countrySlug) ?? currency.countrySlug,
-  period: `${displayYear(currency.startDate)}—${displayYear(currency.endDate)}`,
-  status: displayLabel(currency.status),
-  cause: displayLabel(currency.primaryFailureCause),
-  summary: currency.summary,
-}));
-
-const comparisonRows: readonly ComparisonRow[] = [
-  {
-    currency: "U.S. dollar / current system",
-    period: "Research pending",
-    evidence: "unavailable",
-    event: "Comparable stress series not yet approved",
-    outcome: "No outcome asserted",
-    isDollar: true,
-  },
-  ...verifiedCurrencySeed.currencies.slice(0, 4).map((currency) => ({
-    currency: currency.name,
-    period: `${displayYear(currency.startDate)}—${displayYear(currency.endDate)}`,
-    evidence: "sourced" as const,
-    event: displayLabel(currency.primaryFailureCause),
-    outcome: describeOutcome(
-      currency.status,
-      currency.replacementCurrencyName,
-    ),
-  })),
-];
-
-export default function Home() {
   return (
     <main id="main-content" className="homepage">
       <section className="homepage-hero">
@@ -88,12 +49,7 @@ export default function Home() {
           </div>
 
           <DeathClock
-            units={[
-              { label: "Years", value: "08" },
-              { label: "Months", value: "04" },
-              { label: "Days", value: "17" },
-              { label: "Hours", value: "13" },
-            ]}
+            units={dashboard.clock.units}
           />
         </div>
       </section>
@@ -107,58 +63,71 @@ export default function Home() {
           <p>Every visible state tells you whether a number is sourced, illustrative, stale, or unavailable.</p>
         </div>
 
+        {dashboard.deliveryNotice ? (
+          <aside className="homepage-data-notice" role={dashboard.deliveryNotice.role}>
+            <strong>{dashboard.deliveryNotice.title}</strong>
+            <p>{dashboard.deliveryNotice.detail}</p>
+          </aside>
+        ) : null}
+
         <div className="homepage-metric-grid">
           <MetricCard
             label="U.S. Dollar Stress Score"
-            value="68"
-            unit="of 100"
-            state="fixture"
-            detail="Illustrative composition only. No score or weights are approved for publication."
-            accessory={<RiskBadge level="high" label="Illustrative high" />}
+            value={dashboard.stress.value}
+            state={dashboard.stress.state}
+            detail={dashboard.stress.detail}
             footer={
               <MethodologyTooltip
-                title="No hidden probability"
-                description="A future score will normalize documented inputs using versioned weights. This fixture demonstrates presentation only."
-                href="/methodology/dollar-stress-score"
+                title={`Methodology ${dashboard.stress.methodologyVersion}`}
+                description="A score is withheld until every required source input satisfies the versioned methodology."
+                href={dashboard.stress.sourceHref}
               />
             }
           />
 
           <MetricCard
             label="Verified historical records"
-            value={String(verifiedCurrencySeed.currencies.length)}
+            value={String(dashboard.lifespan.recordCount)}
             unit="cases"
-            state="sourced"
-            detail="Small, source-vetted seed only. It is not a representative sample of all currencies."
-            accessory={<MetricTrend direction="flat" value="v1" context="research seed" />}
+            state={dashboard.lifespan.state}
+            detail={dashboard.lifespan.disclosure}
+            accessory={<MetricTrend direction="flat" value={dashboard.lifespan.fixtureVersion} context="research seed" />}
+            footer={<Link href={dashboard.lifespan.sourceHref}>Inspect lifespan data →</Link>}
           />
 
           <MetricCard
-            label="Average fiat lifespan"
-            value={null}
-            state="unavailable"
-            detail="Withheld until inclusion rules and a representative dataset are approved."
+            label="Selected-sample average lifespan"
+            value={dashboard.lifespan.average}
+            state={dashboard.lifespan.state}
+            detail={`Median ${dashboard.lifespan.median}. ${dashboard.lifespan.disclosure}`}
+            footer={<Link href={dashboard.lifespan.sourceHref}>Method and source set →</Link>}
           />
         </div>
 
         <div className="homepage-research-grid" id="lifespan">
           <ChartFrame
-            title="Lifespan distribution preview"
-            description="An illustrative six-bin distribution rises toward the middle and then declines. These bars are a layout fixture and do not summarize the verified seed or all fiat currencies."
-            state="fixture"
+            title="Selected-sample lifespan distribution"
+            description={`Counts by completed-year range for ${dashboard.lifespan.recordCount} verified records. ${dashboard.lifespan.crossBandCount} record(s) cross a band boundary and are kept separate. This sample is not representative of all fiat currencies.`}
+            state={dashboard.lifespan.state}
             legend={[
-              { label: "Illustrative count", marker: "line", tone: "signal" },
-              { label: "Publication withheld", marker: "dash" },
+              { label: "Verified record count", marker: "line", tone: "signal" },
+              { label: "Cross-band uncertainty separate", marker: "dash" },
             ]}
           >
-            <svg viewBox="0 0 640 220" role="img" aria-labelledby="lifespan-chart-title lifespan-chart-desc">
-              <title id="lifespan-chart-title">Illustrative lifespan distribution</title>
-              <desc id="lifespan-chart-desc">Six outlined bars rise to the third bin, then decline.</desc>
-              <g className="homepage-chart-bars" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M30 190H610" opacity=".4" />
-                <path d="M62 190V156H126V190M152 190V112H216V190M242 190V42H306V190M332 190V76H396V190M422 190V130H486V190M512 190V164H576V190" />
-              </g>
-            </svg>
+            <ol className="homepage-lifespan-bars" aria-label="Selected-sample lifespan distribution">
+              {dashboard.lifespan.distribution.map((band) => (
+                <li key={band.key}>
+                  <span>{band.label}</span>
+                  <div aria-hidden="true"><i style={{ height: `${Math.max(4, (band.count / maximumBandCount) * 100)}%` }} /></div>
+                  <strong className="metric-numerals">{band.count}</strong>
+                </li>
+              ))}
+              <li>
+                <span>Cross-band</span>
+                <div aria-hidden="true"><i style={{ height: `${Math.max(4, (dashboard.lifespan.crossBandCount / maximumBandCount) * 100)}%` }} /></div>
+                <strong className="metric-numerals">{dashboard.lifespan.crossBandCount}</strong>
+              </li>
+            </ol>
           </ChartFrame>
 
           <aside className="survival-dossier" aria-labelledby="survival-title">
@@ -167,17 +136,20 @@ export default function Home() {
                 <p>Database survival audit</p>
                 <h3 id="survival-title">What the seed can say</h3>
               </div>
-              <span className="metric-numerals">V1 / 05</span>
+              <div className="survival-dossier__state">
+                <span className="metric-numerals">{dashboard.lifespan.fixtureVersion} / {String(dashboard.survival.total).padStart(2, "0")}</span>
+                <DataStateBadge state={dashboard.survival.state} />
+              </div>
             </header>
             <dl>
-              <div><dt>Historical records</dt><dd className="metric-numerals">05</dd></div>
-              <div><dt>Collapse classifications</dt><dd className="metric-numerals">01</dd></div>
-              <div><dt>Replacements</dt><dd className="metric-numerals">03</dd></div>
-              <div><dt>Redenominations</dt><dd className="metric-numerals">01</dd></div>
+              <div><dt>Historical records</dt><dd className="metric-numerals">{String(dashboard.survival.total).padStart(2, "0")}</dd></div>
+              {dashboard.survival.counts.map((item) => (
+                <div key={item.label}><dt>{item.label}</dt><dd className="metric-numerals">{String(item.value).padStart(2, "0")}</dd></div>
+              ))}
               <div><dt>Universal survival claim</dt><dd>Withheld</dd></div>
             </dl>
             <p>
-              A currency union transition is not a collapse. A redenomination is not automatically a death. Classification stays visible.
+              A currency union transition is not a collapse. A redenomination is not automatically a death. <Link href={dashboard.survival.sourceHref}>Inspect the classified archive →</Link>
             </p>
           </aside>
         </div>
@@ -188,13 +160,13 @@ export default function Home() {
           <div className="homepage-section-heading">
             <div>
               <p className="section-kicker">Past deaths / transitions / replacements</p>
-              <h2 id="archive-title">Five records. Sources first.</h2>
+              <h2 id="archive-title">{dashboard.lifespan.recordCount} records. Sources first.</h2>
             </div>
-            <Link href="/deaths">Full archive planned →</Link>
+            <Link href="/deaths">Explore full archive →</Link>
           </div>
 
           <div className="currency-record-grid">
-            {currencyCards.map((currency) => (
+            {dashboard.currencyCards.map((currency) => (
               <CurrencyRecordCard key={currency.slug} {...currency} />
             ))}
           </div>
@@ -209,7 +181,10 @@ export default function Home() {
           </div>
           <p>Similar-looking indicators do not prove identical causes or outcomes.</p>
         </div>
-        <UsdComparison rows={comparisonRows} />
+        <UsdComparison rows={dashboard.comparisonRows} />
+        <p className="homepage-provenance">
+          Dollar inputs: development fixture {dashboard.provenance.dollarFixtureVersion}, accessed {dashboard.provenance.dollarAsOf}. Historical records: {dashboard.provenance.currencySeedVersion}. <Link href="/dollar">Inspect dollar sources →</Link>
+        </p>
       </section>
 
       <section className="homepage-methodology" id="methodology-note">
@@ -219,7 +194,7 @@ export default function Home() {
             <h2>The model should invite scrutiny.</h2>
           </div>
           <p>
-            The initial experimental methodology exposes three inputs, their sources,
+            The initial experimental methodology exposes {dashboard.stress.componentCount} inputs, their sources,
             normalization ranges, weights, version, and missing-data policy. It remains
             unapproved for production labeling, and the dramatic clock stays static.
           </p>
@@ -239,4 +214,8 @@ export default function Home() {
       </section>
     </main>
   );
+}
+
+export default function Home() {
+  return <Homepage />;
 }

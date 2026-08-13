@@ -21,7 +21,7 @@ export function DeathClock({ units }: DeathClockProps) {
         <DataStateBadge state="fixture" />
       </header>
 
-      <div className="death-clock__display" aria-label="Illustrative model interval">
+      <div className="death-clock__display" role="group" aria-label="Illustrative model interval">
         {units.map((unit) => (
           <div key={unit.label}>
             <span className="death-clock__value metric-numerals">{unit.value}</span>

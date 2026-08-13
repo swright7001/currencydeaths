@@ -29,7 +29,12 @@ export function MetricCard({
       </header>
       <div className="metric-card__reading">
         <p className="metric-card__value metric-numerals">
-          {value ?? <span aria-label="No value">—</span>}
+          {value ?? (
+            <>
+              <span aria-hidden="true">—</span>
+              <span className="sr-only">No value</span>
+            </>
+          )}
         </p>
         {unit ? <p className="metric-card__unit">{unit}</p> : null}
         {accessory ? <div className="metric-card__accessory">{accessory}</div> : null}
