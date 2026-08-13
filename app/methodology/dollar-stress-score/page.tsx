@@ -3,7 +3,7 @@ import Link from "next/link";
 import { experimentalDollarStressMethodology } from "../../../lib/methodology/dollar-stress-score";
 
 export const metadata: Metadata = {
-  title: "Dollar Stress Score Methodology | CurrencyDeaths",
+  title: "Dollar Stress Score Methodology",
   description:
     "Review the experimental CurrencyDeaths normalization ranges, weights, missing-data policy, sources, and limitations.",
   alternates: { canonical: "/methodology/dollar-stress-score" },

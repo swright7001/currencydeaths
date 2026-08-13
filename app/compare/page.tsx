@@ -10,7 +10,7 @@ import {
 } from "../../lib/data/currency-comparison";
 
 export const metadata: Metadata = {
-  title: "Compare the U.S. Dollar to Currency History | CurrencyDeaths",
+  title: "Compare the U.S. Dollar to Currency History",
   description:
     "Compare sourced U.S. dollar development fixtures with one verified historical currency case without implying identical outcomes.",
   alternates: { canonical: "/compare" },
@@ -79,7 +79,7 @@ export default async function ComparePage({ searchParams = Promise.resolve({}) }
               declares what can—and cannot—be compared.
             </p>
           </div>
-          <div className="compare-hero__versus" aria-label={`U.S. dollar compared with ${comparison.historical.name}`}>
+          <div className="compare-hero__versus" role="img" aria-label={`U.S. dollar compared with ${comparison.historical.name}`}>
             <span>USD</span><b>VS</b><span>{comparison.historical.countryName.slice(0, 3).toUpperCase()}</span>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default async function ComparePage({ searchParams = Promise.resolve({}) }
           </dl>
         </header>
 
-        <div className="compare-legend" aria-label="Comparability labels">
+        <div className="compare-legend" role="group" aria-label="Comparability labels">
           <span><i data-mode="direct" /> Direct means matching definitions, units, and windows.</span>
           <span><i data-mode="contextual" /> Context only means evidence differs in definition, unit, or window.</span>
           <span><i data-mode="unavailable" /> Not comparable means an approved input is absent.</span>

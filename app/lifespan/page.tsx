@@ -12,9 +12,10 @@ import { VERIFIED_CURRENCY_SEED_VERSION } from "../../lib/data/verified-currency
 import type { ArchiveSearchParams } from "../../lib/data/currency-archive";
 
 export const metadata: Metadata = {
-  title: "Currency Lifespan Research | CurrencyDeaths",
+  title: "Currency Lifespan Research",
   description:
     "Explore transparent lifespan ranges derived from CurrencyDeaths' small, source-vetted historical currency sample.",
+  alternates: { canonical: "/lifespan" },
 };
 
 function rangeLabel(range: Readonly<{ minimumYears: number; maximumYears: number }> | null) {

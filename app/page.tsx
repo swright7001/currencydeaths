@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { DeathClock } from "../components/home/death-clock";
 import { EmailSignup } from "../components/home/email-signup";
@@ -16,6 +17,13 @@ import {
   buildHomepageDashboard,
   type HomepageDeliveryState,
 } from "../lib/data/homepage-dashboard";
+
+export const metadata: Metadata = {
+  title: { absolute: "CurrencyDeaths — Monetary History and Dollar Stress Research" },
+  description:
+    "Study source-vetted currency transitions and experimental U.S. dollar stress indicators without treating a model as a forecast.",
+  alternates: { canonical: "/" },
+};
 
 export function Homepage({
   deliveryState = "ready",

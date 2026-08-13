@@ -11,6 +11,7 @@ import {
   formatHistoricalDate,
   getCurrencyDetail,
 } from "../../../lib/data/currency-detail";
+import { serializeJsonLd } from "../../../lib/json-ld";
 
 type CurrencyDetailPageProps = Readonly<{
   params: Promise<{ slug: string }>;
@@ -37,12 +38,12 @@ export async function generateMetadata({
   const detail = getCurrencyDetail(slug);
   if (detail === undefined) {
     return {
-      title: "Currency record not found | CurrencyDeaths",
+      title: "Currency record not found",
       robots: { index: false, follow: false },
     };
   }
 
-  const title = `${detail.name}: What Happened and Why | CurrencyDeaths`;
+  const title = `${detail.name}: What Happened and Why`;
   const canonicalPath = `/deaths/${detail.slug}`;
   return {
     title,
@@ -73,7 +74,7 @@ export default async function CurrencyDetailPage({ params }: CurrencyDetailPageP
     <main id="main-content" className="currency-detail-page">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
 
       <section className="currency-detail-hero">

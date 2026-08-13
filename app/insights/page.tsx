@@ -3,7 +3,7 @@ import { InsightCard } from "../../components/insights/insight-card";
 import { insightArticles } from "../../lib/data/insights";
 
 export const metadata: Metadata = {
-  title: "Monetary History Insights | CurrencyDeaths",
+  title: "Monetary History Insights",
   description: "Sourced research notes that separate monetary-history evidence from interpretation.",
   alternates: { canonical: "/insights" },
 };

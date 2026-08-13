@@ -8,6 +8,7 @@ import {
   getInsightSources,
   insightSlugs,
 } from "../../../lib/data/insights";
+import { serializeJsonLd } from "../../../lib/json-ld";
 
 type InsightPageProps = Readonly<{ params: Promise<{ slug: string }> }>;
 
@@ -20,8 +21,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: InsightPageProps): Promise<Metadata> {
   const { slug } = await params;
   const article = getInsightArticle(slug);
-  if (article === undefined) return { title: "Insight not found | CurrencyDeaths", robots: { index: false, follow: false } };
-  const title = `${article.title} | CurrencyDeaths`;
+  if (article === undefined) return { title: "Insight not found", robots: { index: false, follow: false } };
+  const title = article.title;
   const url = `/insights/${article.slug}`;
   return {
     title,
@@ -39,7 +40,7 @@ export default async function InsightArticlePage({ params }: InsightPageProps) {
 
   return (
     <main id="main-content" className="insight-article-page">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(createInsightStructuredData(article)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(createInsightStructuredData(article)) }} />
       <header className="insight-article-hero">
         <div className="shell-container">
           <Link href="/insights">← Return to insights</Link>
