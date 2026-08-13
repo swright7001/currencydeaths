@@ -42,7 +42,7 @@ export function CurrencyRecordCard({
         <p className="currency-record-card__summary">{summary}</p>
       </div>
       <footer>
-        <Link href={`/deaths/${slug}`}>Research page planned →</Link>
+        <Link href={`/deaths/${slug}`}>Open research record →</Link>
       </footer>
     </article>
   );

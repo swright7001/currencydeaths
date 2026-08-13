@@ -19,7 +19,7 @@ describe("research display primitives", () => {
       expect(html).toContain(`data-state="${state}"`);
       expect(html).toContain("data-state-badge");
       expect(html).toContain(dataStateDescriptors[state].label);
-      expect(html).toContain("aria-label=\"No value\"");
+      expect(html).toContain('<span class="sr-only">No value</span>');
     },
   );
 
