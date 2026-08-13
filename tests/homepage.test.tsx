@@ -73,6 +73,7 @@ describe("cinematic homepage shell", () => {
 
     expect(stateHtml).toContain(notice);
     expect(stateHtml).toContain(marker);
+    if (state === "stale") expect(stateHtml).toContain("Verified seed · refresh due");
     expect(stateHtml).toContain("Selected-sample lifespan distribution");
     expect(stateHtml).toContain("How the U.S. dollar compares");
   });

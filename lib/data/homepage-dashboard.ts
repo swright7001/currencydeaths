@@ -9,7 +9,7 @@ export type HomepageDeliveryState = (typeof homepageDeliveryStates)[number];
 export type HomepageComparisonRow = Readonly<{
   currency: string;
   period: string;
-  evidence: "fixture" | "sourced" | "unavailable";
+  evidence: "fixture" | "sourced" | "stale" | "unavailable";
   event: string;
   outcome: string;
   isDollar?: boolean;
@@ -66,6 +66,7 @@ export function buildHomepageDashboard(deliveryState: HomepageDeliveryState = "r
       value: dollar.stress.score === null ? null : String(dollar.stress.score),
       detail: `${dollar.stress.missingComponents.length} required methodology inputs are unavailable. No score is published.`,
       methodologyVersion: dollar.stress.methodologyVersion,
+      componentCount: dollar.stress.missingComponents.length,
       sourceHref: "/methodology/dollar-stress-score",
     },
     lifespan: {
@@ -96,6 +97,7 @@ export function buildHomepageDashboard(deliveryState: HomepageDeliveryState = "r
       status: displayArchiveLabel(currency.status),
       cause: displayArchiveLabel(currency.primaryFailureCause),
       summary: currency.summary,
+      evidence: sourceState,
     })),
     comparisonRows: [
       {
@@ -109,7 +111,7 @@ export function buildHomepageDashboard(deliveryState: HomepageDeliveryState = "r
       ...currencyArchiveRecords.slice(0, 4).map((currency) => ({
         currency: currency.name,
         period: `${currency.startDate.year}—${currency.endDate.year}`,
-        evidence: "sourced" as const,
+        evidence: sourceState,
         event: displayArchiveLabel(currency.primaryFailureCause),
         outcome: outcomeLabel(currency.status, currency.replacementCurrencyName),
       })),

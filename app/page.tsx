@@ -7,6 +7,7 @@ import {
 } from "../components/home/usd-comparison";
 import {
   ChartFrame,
+  DataStateBadge,
   MethodologyTooltip,
   MetricCard,
   MetricTrend,
@@ -135,7 +136,10 @@ export function Homepage({
                 <p>Database survival audit</p>
                 <h3 id="survival-title">What the seed can say</h3>
               </div>
-              <span className="metric-numerals">{dashboard.lifespan.fixtureVersion} / {String(dashboard.survival.total).padStart(2, "0")}</span>
+              <div className="survival-dossier__state">
+                <span className="metric-numerals">{dashboard.lifespan.fixtureVersion} / {String(dashboard.survival.total).padStart(2, "0")}</span>
+                <DataStateBadge state={dashboard.survival.state} />
+              </div>
             </header>
             <dl>
               <div><dt>Historical records</dt><dd className="metric-numerals">{String(dashboard.survival.total).padStart(2, "0")}</dd></div>
@@ -156,7 +160,7 @@ export function Homepage({
           <div className="homepage-section-heading">
             <div>
               <p className="section-kicker">Past deaths / transitions / replacements</p>
-              <h2 id="archive-title">Five records. Sources first.</h2>
+              <h2 id="archive-title">{dashboard.lifespan.recordCount} records. Sources first.</h2>
             </div>
             <Link href="/deaths">Explore full archive →</Link>
           </div>
@@ -190,7 +194,7 @@ export function Homepage({
             <h2>The model should invite scrutiny.</h2>
           </div>
           <p>
-            The initial experimental methodology exposes three inputs, their sources,
+            The initial experimental methodology exposes {dashboard.stress.componentCount} inputs, their sources,
             normalization ranges, weights, version, and missing-data policy. It remains
             unapproved for production labeling, and the dramatic clock stays static.
           </p>

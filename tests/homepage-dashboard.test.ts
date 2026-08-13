@@ -9,6 +9,7 @@ describe("homepage dashboard model", () => {
     const dashboard = buildHomepageDashboard();
 
     expect(dashboard.stress).toMatchObject({ state: "unavailable", value: null });
+    expect(dashboard.stress.componentCount).toBe(3);
     expect(dashboard.lifespan.recordCount).toBe(5);
     expect(dashboard.lifespan.average).not.toBeNull();
     expect(
@@ -38,5 +39,8 @@ describe("homepage dashboard model", () => {
       state === "ready" ? null : state === "error" ? "alert" : "status",
     );
     expect(dashboard.lifespan.state).toBe(state === "stale" ? "stale" : "sourced");
+    expect(dashboard.survival.state).toBe(state === "stale" ? "stale" : "sourced");
+    expect(dashboard.currencyCards.every((card) => card.evidence === (state === "stale" ? "stale" : "sourced"))).toBe(true);
+    expect(dashboard.comparisonRows.slice(1).every((row) => row.evidence === (state === "stale" ? "stale" : "sourced"))).toBe(true);
   });
 });
