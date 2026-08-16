@@ -7,8 +7,23 @@ export class SiteUrlConfigurationError extends Error {
   }
 }
 
-export function resolveSiteUrl(value = process.env.CURRENCYDEATHS_SITE_URL): URL {
-  const candidate = value?.trim() || LOCAL_SITE_URL;
+function asProviderOrigin(value: string | undefined): string | undefined {
+  const candidate = value?.trim();
+  if (!candidate) return undefined;
+  return candidate.includes("://") ? candidate : `https://${candidate}`;
+}
+
+function providerSiteUrl(): string | undefined {
+  return asProviderOrigin(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL,
+  );
+}
+
+export function resolveSiteUrl(
+  value = process.env.CURRENCYDEATHS_SITE_URL,
+  providerValue = providerSiteUrl(),
+): URL {
+  const candidate = value?.trim() || asProviderOrigin(providerValue) || LOCAL_SITE_URL;
   let url: URL;
 
   try {
