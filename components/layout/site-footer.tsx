@@ -18,6 +18,7 @@ export function SiteFooter() {
         </div>
 
         <div className="site-footer__legal">
+          <Link href="/about">About</Link>
           <Link href="/methodology/dollar-stress-score">Methodology</Link>
           <span>© {new Date().getFullYear()} CurrencyDeaths</span>
         </div>

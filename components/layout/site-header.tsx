@@ -1,14 +1,5 @@
 import Link from "next/link";
-
-const navigation = [
-  { href: "/", label: "Countdown" },
-  { href: "/dollar", label: "Dollar" },
-  { href: "/deaths", label: "Past deaths" },
-  { href: "/compare", label: "Compare" },
-  { href: "/lifespan", label: "Lifespan data" },
-  { href: "/insights", label: "Insights" },
-  { href: "/about", label: "About" },
-] as const;
+import { primaryNavigation } from "@/lib/site-navigation";
 
 function Brand() {
   return (
@@ -30,7 +21,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="desktop-navigation" aria-label="Primary navigation">
-          {navigation.map((item) => (
+          {primaryNavigation.map((item) => (
             <Link key={item.href} href={item.href}>
               {item.label}
             </Link>
@@ -48,7 +39,7 @@ export function SiteHeader() {
             <span className="mobile-navigation__glyph" aria-hidden="true" />
           </summary>
           <nav aria-label="Mobile navigation">
-            {navigation.map((item, index) => (
+            {primaryNavigation.map((item, index) => (
               <Link key={item.href} href={item.href}>
                 <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
                 {item.label}

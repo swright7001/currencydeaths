@@ -1,17 +1,13 @@
 import type { MetadataRoute } from "next";
 import { currencyDetailSlugs } from "../lib/data/currency-detail";
 import { insightSlugs } from "../lib/data/insights";
+import { primaryNavigation } from "../lib/site-navigation";
 import { absoluteSiteUrl } from "../lib/site-url";
 
 export const indexableStaticPaths = [
-  "/",
-  "/deaths",
-  "/dollar",
-  "/compare",
-  "/lifespan",
-  "/insights",
+  ...primaryNavigation.map(({ href }) => href),
   "/methodology/dollar-stress-score",
-] as const;
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const paths = [
