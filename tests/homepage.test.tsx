@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import Home, { Homepage } from "../app/page";
 
 describe("cinematic homepage shell", () => {
-  const html = renderToStaticMarkup(<Home />);
+  const html = renderToStaticMarkup(<Homepage />);
 
   it("frames the model as an inert educational fixture", () => {
     expect(html).toContain("Experimental Dollar Stress Model");
@@ -62,6 +62,13 @@ describe("cinematic homepage shell", () => {
     expect(html).toContain("Dollar inputs: development fixture");
     expect(html).toContain("Historical records:");
     expect(html).toContain("Inspect dollar sources");
+    expect(html).toContain("repository-backed");
+  });
+
+  it("loads the repository-backed research adapter for the default route", async () => {
+    const routeHtml = renderToStaticMarkup(await Home());
+    expect(routeHtml).toContain("Repository-backed limited five-record verified seed");
+    expect(routeHtml).toContain("repository-backed");
   });
 
   it.each([

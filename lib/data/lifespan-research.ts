@@ -2,7 +2,9 @@ import {
   archiveEras,
   archiveFilterOptions,
   currencyArchiveRecords,
+  type ArchiveFilterOptions,
   type ArchiveSearchParams,
+  type CurrencyArchiveRecord,
 } from "./currency-archive";
 import type { CurrencyLifespanRange } from "./currency-lifespan";
 
@@ -62,28 +64,47 @@ function displayLabel(value: string) {
 
 const eraValues = archiveEras.map((era) => era.value);
 
-export const lifespanFilterOptions = {
-  regions: archiveFilterOptions.regions.map((value) => ({
-    value,
-    label: displayLabel(value),
-  })),
-  causes: archiveFilterOptions.causes.map((value) => ({
-    value,
-    label: displayLabel(value),
-  })),
-  eras: archiveEras,
-} as const;
+export type LifespanFilterOptions = Readonly<{
+  regions: readonly Readonly<{ value: string; label: string }>[];
+  causes: readonly Readonly<{ value: string; label: string }>[];
+  eras: typeof archiveEras;
+}>;
 
-export function parseLifespanQuery(params: ArchiveSearchParams): LifespanQuery {
+export function createLifespanFilterOptions(
+  options: ArchiveFilterOptions,
+): LifespanFilterOptions {
   return {
-    region: allowedValue(scalar(params.region), archiveFilterOptions.regions),
-    cause: allowedValue(scalar(params.cause), archiveFilterOptions.causes),
+    regions: options.regions.map((value) => ({
+      value,
+      label: displayLabel(value),
+    })),
+    causes: options.causes.map((value) => ({
+      value,
+      label: displayLabel(value),
+    })),
+    eras: archiveEras,
+  };
+}
+
+export const lifespanFilterOptions = createLifespanFilterOptions(archiveFilterOptions);
+
+export function parseLifespanQuery(
+  params: ArchiveSearchParams,
+  options: LifespanFilterOptions = lifespanFilterOptions,
+): LifespanQuery {
+  const regions = options.regions.map((option) => option.value);
+  const causes = options.causes.map((option) => option.value);
+  return {
+    region: allowedValue(scalar(params.region), regions),
+    cause: allowedValue(scalar(params.cause), causes),
     era: allowedValue(scalar(params.era), eraValues),
   };
 }
 
-export const lifespanResearchRecords: readonly LifespanResearchRecord[] =
-  currencyArchiveRecords.map((record) => ({
+export function createLifespanResearchRecords(
+  records: readonly CurrencyArchiveRecord[],
+): readonly LifespanResearchRecord[] {
+  return records.map((record) => ({
     slug: record.slug,
     name: record.name,
     region: record.region,
@@ -93,6 +114,9 @@ export const lifespanResearchRecords: readonly LifespanResearchRecord[] =
     endYear: record.endDate.year,
     lifespan: record.lifespan,
   }));
+}
+
+export const lifespanResearchRecords = createLifespanResearchRecords(currencyArchiveRecords);
 
 export function filterLifespanRecords(
   query: LifespanQuery,

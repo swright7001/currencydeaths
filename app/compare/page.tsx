@@ -4,10 +4,12 @@ import { CurrencyCompareSelector } from "../../components/compare/currency-compa
 import { DataStateBadge } from "../../components/research";
 import {
   buildCurrencyComparison,
+  createComparisonCurrencyOptions,
   resolveComparisonSelection,
   type ComparisonMode,
   type ComparisonSide,
 } from "../../lib/data/currency-comparison";
+import { loadResearchCollection } from "../../lib/data/research-repository";
 
 export const metadata: Metadata = {
   title: "Compare the U.S. Dollar to Currency History",
@@ -63,9 +65,11 @@ function ComparisonValue({ side, label }: Readonly<{ side: ComparisonSide; label
 }
 
 export default async function ComparePage({ searchParams = Promise.resolve({}) }: ComparePageProps) {
+  const loaded = await loadResearchCollection();
+  const options = createComparisonCurrencyOptions(loaded.dataset);
   const query = await searchParams;
-  const selection = resolveComparisonSelection(query.currency);
-  const comparison = buildCurrencyComparison(selection.slug);
+  const selection = resolveComparisonSelection(query.currency, options);
+  const comparison = buildCurrencyComparison(selection.slug, loaded.dataset);
 
   return (
     <main id="main-content" className="compare-page">
@@ -91,7 +95,7 @@ export default async function ComparePage({ searchParams = Promise.resolve({}) }
           <h2 id="compare-controls-title">Choose the historical record</h2>
           <p>The query parameter in the resulting URL preserves the selected case.</p>
         </div>
-        <CurrencyCompareSelector selectedSlug={selection.slug} />
+        <CurrencyCompareSelector selectedSlug={selection.slug} options={options} />
         {selection.state === "invalid" ? (
           <p className="compare-query-warning" role="status">
             That currency is not in the verified comparison set. The default case is shown.
@@ -114,7 +118,7 @@ export default async function ComparePage({ searchParams = Promise.resolve({}) }
       <section className="shell-container compare-ledger" aria-labelledby="compare-ledger-title">
         <header>
           <div>
-            <p className="section-kicker">Evidence ledger / {comparison.fixtureVersion}</p>
+            <p className="section-kicker" data-research-source={loaded.source}>Evidence ledger / {comparison.fixtureVersion} / {loaded.sourceLabel}</p>
             <h2 id="compare-ledger-title">USD vs {comparison.historical.name}</h2>
           </div>
           <dl aria-label="Comparability summary">

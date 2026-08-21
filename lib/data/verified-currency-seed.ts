@@ -11,6 +11,13 @@ export type VerifiedSeedSource = Readonly<{
   sourceType: "central_bank" | "international_institution" | "academic";
 }>;
 
+export type VerifiedSeedCountry = Readonly<{
+  name: string;
+  slug: string;
+  isoCode: string;
+  region: "africa" | "asia" | "europe" | "middle_east" | "north_america" | "oceania" | "south_america" | "global" | "other";
+}>;
+
 export type VerifiedSeedClaim = Readonly<{
   field: string;
   statement: string;
@@ -42,6 +49,14 @@ export type VerifiedSeedCurrency = Readonly<{
   historicalContext: string;
   sourceKeys: readonly string[];
   claims: readonly VerifiedSeedClaim[];
+}>;
+
+export type VerifiedCurrencyDataset = Readonly<{
+  version: string;
+  accessedAt: number;
+  countries: readonly VerifiedSeedCountry[];
+  sources: readonly VerifiedSeedSource[];
+  currencies: readonly VerifiedSeedCurrency[];
 }>;
 
 export const verifiedCurrencySeed = {
@@ -224,7 +239,7 @@ export const verifiedCurrencySeed = {
       ],
     },
   ] as const satisfies readonly VerifiedSeedCurrency[],
-} as const;
+} as const satisfies VerifiedCurrencyDataset;
 
 export function assertVerifiedCurrencySeedIntegrity() {
   const sourceKeys = new Set(verifiedCurrencySeed.sources.map((source) => source.key));

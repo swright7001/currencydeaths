@@ -9,8 +9,9 @@ import {
   createCurrencyDetailStructuredData,
   currencyDetailSlugs,
   formatHistoricalDate,
-  getCurrencyDetail,
+  getCurrencyDetailFromDataset,
 } from "../../../lib/data/currency-detail";
+import { loadResearchCurrency } from "../../../lib/data/research-repository";
 import { serializeJsonLd } from "../../../lib/json-ld";
 
 type CurrencyDetailPageProps = Readonly<{
@@ -35,13 +36,15 @@ export async function generateMetadata({
   params,
 }: CurrencyDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const detail = getCurrencyDetail(slug);
-  if (detail === undefined) {
+  const loaded = await loadResearchCurrency(slug);
+  if (loaded === null) {
     return {
       title: "Currency record not found",
       robots: { index: false, follow: false },
     };
   }
+  const detail = getCurrencyDetailFromDataset(loaded.dataset, slug);
+  if (detail === undefined) throw new Error("Loaded research record is missing.");
 
   const title = `${detail.name}: What Happened and Why`;
   const canonicalPath = `/deaths/${detail.slug}`;
@@ -65,8 +68,10 @@ export async function generateMetadata({
 
 export default async function CurrencyDetailPage({ params }: CurrencyDetailPageProps) {
   const { slug } = await params;
-  const detail = getCurrencyDetail(slug);
-  if (detail === undefined) notFound();
+  const loaded = await loadResearchCurrency(slug);
+  if (loaded === null) notFound();
+  const detail = getCurrencyDetailFromDataset(loaded.dataset, slug);
+  if (detail === undefined) throw new Error("Loaded research record is missing.");
 
   const structuredData = createCurrencyDetailStructuredData(detail);
 
@@ -84,8 +89,8 @@ export default async function CurrencyDetailPage({ params }: CurrencyDetailPageP
           </Link>
           <div className="currency-detail-hero__grid">
             <div>
-              <p className="section-kicker">
-                {detail.countryName} / verified research record
+              <p className="section-kicker" data-research-source={loaded.source}>
+                {detail.countryName} / {loaded.sourceLabel}
               </p>
               <h1>{detail.name}</h1>
               <p>{detail.summary}</p>

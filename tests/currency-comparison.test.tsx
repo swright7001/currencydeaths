@@ -66,6 +66,8 @@ describe("comparison route", () => {
       await ComparePage({ searchParams: Promise.resolve({ currency: "hungarian-pengo" }) }),
     );
     expect(html).toContain("USD vs Hungarian pengő");
+    expect(html).toContain("Repository-backed verified seed");
+    expect(html).toContain('data-research-source="repository"');
     expect(html).toContain("Similarity is not destiny");
     expect(html).toContain("Context only");
     expect(html).toContain("Not comparable");

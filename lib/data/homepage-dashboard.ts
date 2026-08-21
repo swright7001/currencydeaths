@@ -1,7 +1,17 @@
-import { currencyArchiveRecords, displayArchiveLabel } from "./currency-archive";
+import {
+  createCurrencyArchiveRecords,
+  displayArchiveLabel,
+} from "./currency-archive";
 import { buildFixtureDollarDashboard, formatUtcDate } from "./dollar-dashboard";
-import { buildLifespanResearch, lifespanResearchRecords } from "./lifespan-research";
-import { VERIFIED_CURRENCY_SEED_VERSION } from "./verified-currency-seed";
+import {
+  buildLifespanResearch,
+  createLifespanResearchRecords,
+} from "./lifespan-research";
+import {
+  verifiedCurrencySeed,
+  type VerifiedCurrencyDataset,
+} from "./verified-currency-seed";
+import type { ResearchDeliverySource } from "./research-repository";
 
 export const homepageDeliveryStates = ["ready", "loading", "error", "stale"] as const;
 export type HomepageDeliveryState = (typeof homepageDeliveryStates)[number];
@@ -40,9 +50,16 @@ function deliveryNotice(state: HomepageDeliveryState) {
   return null;
 }
 
-export function buildHomepageDashboard(deliveryState: HomepageDeliveryState = "ready") {
+export function buildHomepageDashboard(
+  deliveryState: HomepageDeliveryState = "ready",
+  dataset: VerifiedCurrencyDataset = verifiedCurrencySeed,
+  researchSource: ResearchDeliverySource = "repository",
+) {
   const dollar = buildFixtureDollarDashboard();
-  const lifespan = buildLifespanResearch(lifespanResearchRecords);
+  const currencyArchiveRecords = createCurrencyArchiveRecords(dataset);
+  const lifespan = buildLifespanResearch(
+    createLifespanResearchRecords(currencyArchiveRecords),
+  );
   const statusCounts = new Map<string, number>();
   for (const record of currencyArchiveRecords) {
     statusCounts.set(record.status, (statusCounts.get(record.status) ?? 0) + 1);
@@ -76,9 +93,9 @@ export function buildHomepageDashboard(deliveryState: HomepageDeliveryState = "r
       median: rangeLabel(lifespan.median),
       distribution: lifespan.distribution,
       crossBandCount: lifespan.crossBandCount,
-      fixtureVersion: VERIFIED_CURRENCY_SEED_VERSION,
+      fixtureVersion: dataset.version,
       sourceHref: "/lifespan",
-      disclosure: "Limited five-record verified seed; not representative of all fiat currencies. Aggregates preserve date-precision ranges.",
+      disclosure: `${researchSource === "convex" ? "Convex-backed" : "Repository-backed"} limited five-record verified seed; not representative of all fiat currencies. Aggregates preserve date-precision ranges.`,
     },
     survival: {
       state: sourceState,
@@ -119,7 +136,8 @@ export function buildHomepageDashboard(deliveryState: HomepageDeliveryState = "r
     provenance: {
       dollarFixtureVersion: dollar.fixtureVersion,
       dollarAsOf: formatUtcDate(dollar.freshnessAsOf),
-      currencySeedVersion: VERIFIED_CURRENCY_SEED_VERSION,
+      currencySeedVersion: dataset.version,
+      currencyDelivery: researchSource,
     },
   } as const;
 }

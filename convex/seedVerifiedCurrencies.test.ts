@@ -1,6 +1,6 @@
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
@@ -75,5 +75,57 @@ describe("verified currency seed mutation", () => {
     await expect(
       t.mutation(internal.seedVerifiedCurrencies.apply, { version }),
     ).rejects.toThrow("unique key is owned by non-seed research data");
+  });
+
+  it("serves a bounded, version-consistent public seed collection and slug record", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.seedVerifiedCurrencies.apply, { version });
+
+    const collection = await t.query(api.research.listVerifiedCurrencySeed, { version });
+    expect(collection.version).toBe(version);
+    expect(collection.records).toHaveLength(5);
+    expect(collection.records.map((record) => record.currency.slug).sort()).toEqual([
+      "german-papiermark",
+      "greek-drachma",
+      "hungarian-pengo",
+      "venezuelan-bolivar-fuerte",
+      "zimbabwe-dollar-1980",
+    ]);
+    expect(collection.records.every((record) => record.sources.length > 0)).toBe(true);
+
+    const detail = await t.query(api.research.getVerifiedCurrencySeedBySlug, {
+      version,
+      slug: "hungarian-pengo",
+    });
+    expect(detail?.country.name).toBe("Hungary");
+    expect(detail?.currency.recordState).toBe("verified");
+    expect(
+      await t.query(api.research.getVerifiedCurrencySeedBySlug, {
+        version,
+        slug: "not-in-the-seed",
+      }),
+    ).toBeNull();
+  });
+
+  it("fails the public seed read when a related source loses version ownership", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.seedVerifiedCurrencies.apply, { version });
+    await t.run(async (ctx) => {
+      const source = await ctx.db
+        .query("sources")
+        .withIndex("by_url", (q) =>
+          q.eq(
+            "url",
+            "https://www.bundesbank.de/en/tasks/topics/inflation-lessons-learnt-from-history-666006",
+          ),
+        )
+        .unique();
+      if (source === null) throw new Error("seed source missing");
+      await ctx.db.patch(source._id, { seedVersion: "tampered-version" });
+    });
+
+    await expect(
+      t.query(api.research.listVerifiedCurrencySeed, { version }),
+    ).rejects.toThrow("version mismatch");
   });
 });

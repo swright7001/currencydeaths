@@ -34,6 +34,8 @@ describe("currency detail route", () => {
       }),
     );
     expect(html).toContain("Historical timeline");
+    expect(html).toContain("Repository-backed verified seed");
+    expect(html).toContain('data-research-source="repository"');
     expect(html).toContain("year precision");
     expect(html).toContain("day precision");
     expect(html).toContain("No claim-level evidence for this section");
