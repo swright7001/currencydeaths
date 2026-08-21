@@ -1,5 +1,9 @@
 import { currencyLifespanRange } from "./currency-lifespan";
-import { verifiedCurrencySeed } from "./verified-currency-seed";
+import {
+  verifiedCurrencySeed,
+  type VerifiedCurrencyDataset,
+  type VerifiedSeedCurrency,
+} from "./verified-currency-seed";
 
 export const archiveEras = [
   { value: "before_1900", label: "Before 1900" },
@@ -46,46 +50,55 @@ function uniqueSorted(values: readonly string[]) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
-const countriesBySlug = new Map(
-  verifiedCurrencySeed.countries.map((country) => [country.slug, country]),
-);
+export type ArchiveFilterOptions = Readonly<{
+  countries: readonly Readonly<{ value: string; label: string }>[];
+  regions: readonly string[];
+  causes: readonly string[];
+  currencyTypes: readonly string[];
+  statuses: readonly string[];
+}>;
 
-export const archiveFilterOptions = {
-  countries: [...verifiedCurrencySeed.countries]
-    .map(({ slug, name }) => ({ value: slug, label: name }))
-    .sort((left, right) => left.label.localeCompare(right.label)),
-  regions: uniqueSorted(
-    verifiedCurrencySeed.countries.map((country) => country.region),
-  ),
-  causes: uniqueSorted(
-    verifiedCurrencySeed.currencies.flatMap((currency) => currency.failureCauses),
-  ),
-  currencyTypes: uniqueSorted(
-    verifiedCurrencySeed.currencies.map((currency) => currency.currencyType),
-  ),
-  statuses: uniqueSorted(
-    verifiedCurrencySeed.currencies.map((currency) => currency.status),
-  ),
-} as const;
+export function createArchiveFilterOptions(
+  dataset: VerifiedCurrencyDataset,
+): ArchiveFilterOptions {
+  return {
+    countries: [...dataset.countries]
+      .map(({ slug, name }) => ({ value: slug, label: name }))
+      .sort((left, right) => left.label.localeCompare(right.label)),
+    regions: uniqueSorted(dataset.countries.map((country) => country.region)),
+    causes: uniqueSorted(
+      dataset.currencies.flatMap((currency) => currency.failureCauses),
+    ),
+    currencyTypes: uniqueSorted(
+      dataset.currencies.map((currency) => currency.currencyType),
+    ),
+    statuses: uniqueSorted(dataset.currencies.map((currency) => currency.status)),
+  };
+}
+
+export const archiveFilterOptions = createArchiveFilterOptions(verifiedCurrencySeed);
 
 const eraValues = archiveEras.map((era) => era.value);
 const lifespanValues = archiveLifespanBands.map((band) => band.value);
 
-export function parseArchiveQuery(params: ArchiveSearchParams): ArchiveQuery {
+export function parseArchiveQuery(
+  params: ArchiveSearchParams,
+  options: ArchiveFilterOptions = archiveFilterOptions,
+): ArchiveQuery {
   return {
     search: firstValue(params.q).trim().slice(0, 80),
     country: allowedValue(
       firstValue(params.country),
-      archiveFilterOptions.countries.map((country) => country.value),
+      options.countries.map((country) => country.value),
     ),
-    region: allowedValue(firstValue(params.region), archiveFilterOptions.regions),
+    region: allowedValue(firstValue(params.region), options.regions),
     era: allowedValue(firstValue(params.era), eraValues),
-    cause: allowedValue(firstValue(params.cause), archiveFilterOptions.causes),
+    cause: allowedValue(firstValue(params.cause), options.causes),
     currencyType: allowedValue(
       firstValue(params.type),
-      archiveFilterOptions.currencyTypes,
+      options.currencyTypes,
     ),
-    status: allowedValue(firstValue(params.status), archiveFilterOptions.statuses),
+    status: allowedValue(firstValue(params.status), options.statuses),
     lifespan: allowedValue(firstValue(params.lifespan), lifespanValues),
   };
 }
@@ -116,8 +129,22 @@ function searchable(value: string) {
     .toLocaleLowerCase();
 }
 
-export const currencyArchiveRecords = verifiedCurrencySeed.currencies.map(
-  (currency) => {
+export type CurrencyArchiveRecord = VerifiedSeedCurrency & Readonly<{
+  countryName: string;
+  region: string;
+  era: Era;
+  lifespan: NonNullable<ReturnType<typeof currencyLifespanRange>>;
+  lifespanBand: LifespanBand | null;
+  searchText: string;
+}>;
+
+export function createCurrencyArchiveRecords(
+  dataset: VerifiedCurrencyDataset,
+): readonly CurrencyArchiveRecord[] {
+  const countriesBySlug = new Map(
+    dataset.countries.map((country) => [country.slug, country]),
+  );
+  return dataset.currencies.map((currency) => {
     const country = countriesBySlug.get(currency.countrySlug);
     if (country === undefined) {
       throw new Error(`Unknown archive country: ${currency.countrySlug}`);
@@ -150,15 +177,18 @@ export const currencyArchiveRecords = verifiedCurrencySeed.currencies.map(
         ].join(" "),
       ),
     };
-  },
-);
+  });
+}
 
-export type CurrencyArchiveRecord = (typeof currencyArchiveRecords)[number];
+export const currencyArchiveRecords = createCurrencyArchiveRecords(verifiedCurrencySeed);
 
-export function filterCurrencyArchive(query: ArchiveQuery) {
+export function filterCurrencyArchive(
+  query: ArchiveQuery,
+  records: readonly CurrencyArchiveRecord[] = currencyArchiveRecords,
+) {
   const search = searchable(query.search);
 
-  return currencyArchiveRecords.filter((record) => {
+  return records.filter((record) => {
     if (search !== "" && !record.searchText.includes(search)) return false;
     if (query.country !== "" && record.countrySlug !== query.country) return false;
     if (query.region !== "" && record.region !== query.region) return false;

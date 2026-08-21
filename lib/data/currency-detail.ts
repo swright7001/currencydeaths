@@ -3,24 +3,14 @@ import type { HistoricalDate } from "./historical-date";
 import { absoluteSiteUrl } from "../site-url";
 import {
   verifiedCurrencySeed,
+  type VerifiedCurrencyDataset,
   type VerifiedSeedCurrency,
   type VerifiedSeedSource,
 } from "./verified-currency-seed";
-
-const currencies: readonly VerifiedSeedCurrency[] = verifiedCurrencySeed.currencies;
-const sources: readonly VerifiedSeedSource[] = verifiedCurrencySeed.sources;
-
-type VerifiedSeedCountry = (typeof verifiedCurrencySeed.countries)[number];
-
-const countriesBySlug = new Map<string, VerifiedSeedCountry>(
-  verifiedCurrencySeed.countries.map((country) => [country.slug, country]),
-);
-
-const sourcesByKey = new Map<string, VerifiedSeedSource>(
-  sources.map((source) => [source.key, source]),
-);
-
-function resolveSources(keys: readonly string[]) {
+function resolveSources(
+  keys: readonly string[],
+  sourcesByKey: ReadonlyMap<string, VerifiedSeedSource>,
+) {
   return keys.map((key) => {
     const source = sourcesByKey.get(key);
     if (source === undefined) throw new Error(`Unknown detail source: ${key}`);
@@ -50,11 +40,21 @@ export function historicalDateToIso(date: HistoricalDate) {
   return `${year}-${month}-${String(date.day).padStart(2, "0")}`;
 }
 
-export const currencyDetailSlugs = currencies.map(
+export const currencyDetailSlugs = verifiedCurrencySeed.currencies.map(
   (currency) => currency.slug,
 );
 
-export function getCurrencyDetail(slug: string) {
+export function getCurrencyDetailFromDataset(
+  dataset: VerifiedCurrencyDataset,
+  slug: string,
+) {
+  const currencies: readonly VerifiedSeedCurrency[] = dataset.currencies;
+  const countriesBySlug = new Map(
+    dataset.countries.map((country) => [country.slug, country]),
+  );
+  const sourcesByKey = new Map<string, VerifiedSeedSource>(
+    dataset.sources.map((source) => [source.key, source]),
+  );
   const currency = currencies.find(
     (candidate) => candidate.slug === slug,
   );
@@ -72,7 +72,7 @@ export function getCurrencyDetail(slug: string) {
 
   const claims = currency.claims.map((claim) => ({
     ...claim,
-    sources: resolveSources(claim.sourceKeys),
+    sources: resolveSources(claim.sourceKeys, sourcesByKey),
   }));
   const startClaim = claims.find((claim) => claim.field === "startDate");
   const endClaim = claims.find((claim) => claim.field.startsWith("endDate"));
@@ -85,7 +85,7 @@ export function getCurrencyDetail(slug: string) {
     ...currency,
     countryName: country.name,
     region: country.region,
-    sources: resolveSources(currency.sourceKeys),
+    sources: resolveSources(currency.sourceKeys, sourcesByKey),
     claims,
     causeClaim,
     lifespan,
@@ -108,6 +108,10 @@ export function getCurrencyDetail(slug: string) {
       },
     ],
   };
+}
+
+export function getCurrencyDetail(slug: string) {
+  return getCurrencyDetailFromDataset(verifiedCurrencySeed, slug);
 }
 
 export type CurrencyDetail = NonNullable<ReturnType<typeof getCurrencyDetail>>;

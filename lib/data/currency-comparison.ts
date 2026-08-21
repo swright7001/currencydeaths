@@ -1,9 +1,12 @@
 import { buildFixtureDollarDashboard, formatHistoricalMonth } from "./dollar-dashboard";
 import {
-  currencyDetailSlugs,
   formatHistoricalDate,
-  getCurrencyDetail,
+  getCurrencyDetailFromDataset,
 } from "./currency-detail";
+import {
+  verifiedCurrencySeed,
+  type VerifiedCurrencyDataset,
+} from "./verified-currency-seed";
 
 export type ComparisonMode = "direct" | "contextual" | "unavailable";
 
@@ -56,24 +59,43 @@ function unavailable(reason: string, unit: string, timeWindow: string): Comparis
   return { value: null, unit, timeWindow, sources: [], unavailableReason: reason };
 }
 
-export const comparisonCurrencyOptions = currencyDetailSlugs.map((slug) => {
-  const detail = getCurrencyDetail(slug);
-  if (detail === undefined) throw new Error(`Comparison option missing: ${slug}`);
-  return { slug, name: detail.name, countryName: detail.countryName } as const;
-});
+export type ComparisonCurrencyOption = Readonly<{
+  slug: string;
+  name: string;
+  countryName: string;
+}>;
+
+export function createComparisonCurrencyOptions(
+  dataset: VerifiedCurrencyDataset,
+): readonly ComparisonCurrencyOption[] {
+  return dataset.currencies.map(({ slug }) => {
+    const detail = getCurrencyDetailFromDataset(dataset, slug);
+    if (detail === undefined) throw new Error(`Comparison option missing: ${slug}`);
+    return { slug, name: detail.name, countryName: detail.countryName } as const;
+  });
+}
+
+export const comparisonCurrencyOptions = createComparisonCurrencyOptions(verifiedCurrencySeed);
 
 export function resolveComparisonSelection(
   value: string | string[] | undefined,
+  options: readonly ComparisonCurrencyOption[] = comparisonCurrencyOptions,
 ): Readonly<{ slug: string; state: ComparisonQueryState }> {
-  if (value === undefined || value === "") return { slug: defaultCurrencySlug, state: "default" };
-  if (typeof value === "string" && currencyDetailSlugs.includes(value)) {
+  const slugs = options.map((option) => option.slug);
+  const fallbackSlug = slugs.includes(defaultCurrencySlug) ? defaultCurrencySlug : slugs[0];
+  if (fallbackSlug === undefined) throw new Error("Comparison set is empty.");
+  if (value === undefined || value === "") return { slug: fallbackSlug, state: "default" };
+  if (typeof value === "string" && slugs.includes(value)) {
     return { slug: value, state: "selected" };
   }
-  return { slug: defaultCurrencySlug, state: "invalid" };
+  return { slug: fallbackSlug, state: "invalid" };
 }
 
-export function buildCurrencyComparison(slug: string) {
-  const historical = getCurrencyDetail(slug);
+export function buildCurrencyComparison(
+  slug: string,
+  dataset: VerifiedCurrencyDataset = verifiedCurrencySeed,
+) {
+  const historical = getCurrencyDetailFromDataset(dataset, slug);
   if (historical === undefined) throw new Error(`Unknown comparison currency: ${slug}`);
 
   const dashboard = buildFixtureDollarDashboard();

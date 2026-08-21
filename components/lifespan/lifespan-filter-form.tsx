@@ -1,7 +1,7 @@
 import Link from "next/link";
-import {
-  lifespanFilterOptions,
-  type LifespanQuery,
+import type {
+  LifespanFilterOptions,
+  LifespanQuery,
 } from "../../lib/data/lifespan-research";
 
 type Option = Readonly<{ value: string; label: string }>;
@@ -37,7 +37,12 @@ function FilterSelect({
 export function LifespanFilterForm({
   query,
   activeCount,
-}: Readonly<{ query: LifespanQuery; activeCount: number }>) {
+  options,
+}: Readonly<{
+  query: LifespanQuery;
+  activeCount: number;
+  options: LifespanFilterOptions;
+}>) {
   return (
     <form className="lifespan-filters" action="/lifespan" method="get">
       <header>
@@ -48,9 +53,9 @@ export function LifespanFilterForm({
         <span aria-live="polite">{String(activeCount).padStart(2, "0")} active</span>
       </header>
       <div>
-        <FilterSelect id="lifespan-region" label="Region" name="region" options={lifespanFilterOptions.regions} value={query.region} />
-        <FilterSelect id="lifespan-cause" label="Documented cause" name="cause" options={lifespanFilterOptions.causes} value={query.cause} />
-        <FilterSelect id="lifespan-era" label="Transition era" name="era" options={lifespanFilterOptions.eras} value={query.era} />
+        <FilterSelect id="lifespan-region" label="Region" name="region" options={options.regions} value={query.region} />
+        <FilterSelect id="lifespan-cause" label="Documented cause" name="cause" options={options.causes} value={query.cause} />
+        <FilterSelect id="lifespan-era" label="Transition era" name="era" options={options.eras} value={query.era} />
       </div>
       <footer>
         <button type="submit">Apply filters</button>

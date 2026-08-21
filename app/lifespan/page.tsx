@@ -4,12 +4,18 @@ import { LifespanFilterForm } from "../../components/lifespan/lifespan-filter-fo
 import {
   activeLifespanFilterCount,
   buildLifespanResearch,
+  createLifespanFilterOptions,
+  createLifespanResearchRecords,
   filterLifespanRecords,
   parseLifespanQuery,
   type LifespanResearchRecord,
 } from "../../lib/data/lifespan-research";
-import { VERIFIED_CURRENCY_SEED_VERSION } from "../../lib/data/verified-currency-seed";
-import type { ArchiveSearchParams } from "../../lib/data/currency-archive";
+import {
+  createArchiveFilterOptions,
+  createCurrencyArchiveRecords,
+  type ArchiveSearchParams,
+} from "../../lib/data/currency-archive";
+import { loadResearchCollection } from "../../lib/data/research-repository";
 
 export const metadata: Metadata = {
   title: "Currency Lifespan Research",
@@ -41,8 +47,14 @@ function RecordList({ records }: Readonly<{ records: readonly LifespanResearchRe
 export default async function LifespanPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<ArchiveSearchParams> }>) {
-  const query = parseLifespanQuery(await searchParams);
-  const records = filterLifespanRecords(query);
+  const loaded = await loadResearchCollection();
+  const archiveOptions = createArchiveFilterOptions(loaded.dataset);
+  const options = createLifespanFilterOptions(archiveOptions);
+  const allRecords = createLifespanResearchRecords(
+    createCurrencyArchiveRecords(loaded.dataset),
+  );
+  const query = parseLifespanQuery(await searchParams, options);
+  const records = filterLifespanRecords(query, allRecords);
   const research = buildLifespanResearch(records);
   const activeCount = activeLifespanFilterCount(query);
   const maximumBandCount = Math.max(1, ...research.distribution.map((band) => band.count));
@@ -52,8 +64,8 @@ export default async function LifespanPage({
       <section className="lifespan-hero">
         <div className="shell-container lifespan-hero__grid">
           <div>
-            <p className="section-kicker">Lifespan data / verified seed</p>
-            <h1>Five records.<br /><em>Not a law of money.</em></h1>
+            <p className="section-kicker" data-research-source={loaded.source}>Lifespan data / {loaded.sourceLabel}</p>
+            <h1>{allRecords.length} records.<br /><em>Not a law of money.</em></h1>
           </div>
           <div className="lifespan-hero__readout">
             <span>Selected sample</span>
@@ -64,7 +76,7 @@ export default async function LifespanPage({
       </section>
 
       <div className="shell-container lifespan-workspace">
-        <LifespanFilterForm query={query} activeCount={activeCount} />
+        <LifespanFilterForm query={query} activeCount={activeCount} options={options} />
 
         {research.count === 0 ? (
           <section className="lifespan-empty" role="status">
@@ -144,7 +156,7 @@ export default async function LifespanPage({
 
         <section className="lifespan-methodology" aria-labelledby="lifespan-methodology-title">
           <div>
-            <p className="section-kicker">Methodology / {VERIFIED_CURRENCY_SEED_VERSION}</p>
+            <p className="section-kicker">Methodology / {loaded.dataset.version}</p>
             <h2 id="lifespan-methodology-title">Read the limits before the number.</h2>
           </div>
           <div className="lifespan-methodology__notes">

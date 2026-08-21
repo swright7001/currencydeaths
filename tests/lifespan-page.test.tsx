@@ -9,6 +9,8 @@ describe("lifespan research page", () => {
     );
 
     expect(html).toContain("46.8–47.2 years");
+    expect(html).toContain("Repository-backed verified seed");
+    expect(html).toContain('data-research-source="repository"');
     expect(html).toContain("19 years");
     expect(html).toContain("curated five-case research seed");
     expect(html).toContain("must not be generalized to all fiat currencies");

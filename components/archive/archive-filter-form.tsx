@@ -1,15 +1,16 @@
 import Link from "next/link";
 import {
   archiveEras,
-  archiveFilterOptions,
   archiveLifespanBands,
   displayArchiveLabel,
+  type ArchiveFilterOptions,
   type ArchiveQuery,
 } from "../../lib/data/currency-archive";
 
 type ArchiveFilterFormProps = Readonly<{
   query: ArchiveQuery;
   activeCount: number;
+  options: ArchiveFilterOptions;
 }>;
 
 type SelectOption = Readonly<{ value: string; label: string }>;
@@ -45,7 +46,7 @@ function ArchiveSelect({
 const labeled = (values: readonly string[]) =>
   values.map((value) => ({ value, label: displayArchiveLabel(value) }));
 
-export function ArchiveFilterForm({ query, activeCount }: ArchiveFilterFormProps) {
+export function ArchiveFilterForm({ query, activeCount, options }: ArchiveFilterFormProps) {
   return (
     <form className="archive-filter-panel" action="/deaths" method="get">
       <header>
@@ -76,14 +77,14 @@ export function ArchiveFilterForm({ query, activeCount }: ArchiveFilterFormProps
           name="country"
           label="Country"
           value={query.country}
-          options={archiveFilterOptions.countries}
+          options={options.countries}
         />
         <ArchiveSelect
           id="archive-region"
           name="region"
           label="Region"
           value={query.region}
-          options={labeled(archiveFilterOptions.regions)}
+          options={labeled(options.regions)}
         />
         <ArchiveSelect
           id="archive-era"
@@ -97,21 +98,21 @@ export function ArchiveFilterForm({ query, activeCount }: ArchiveFilterFormProps
           name="cause"
           label="Documented cause"
           value={query.cause}
-          options={labeled(archiveFilterOptions.causes)}
+          options={labeled(options.causes)}
         />
         <ArchiveSelect
           id="archive-type"
           name="type"
           label="Currency type"
           value={query.currencyType}
-          options={labeled(archiveFilterOptions.currencyTypes)}
+          options={labeled(options.currencyTypes)}
         />
         <ArchiveSelect
           id="archive-status"
           name="status"
           label="Status"
           value={query.status}
-          options={labeled(archiveFilterOptions.statuses)}
+          options={labeled(options.statuses)}
         />
         <ArchiveSelect
           id="archive-lifespan"

@@ -4,7 +4,9 @@ import {
   historicalDateToKey,
 } from "../lib/data/historical-date";
 import { validateDollarMetricObservation } from "../lib/data/dollar-metric-contracts";
-import { internalMutation, query } from "./_generated/server";
+import { VERIFIED_CURRENCY_SEED_VERSION } from "../lib/data/verified-currency-seed";
+import type { Doc } from "./_generated/dataModel";
+import { internalMutation, query, type QueryCtx } from "./_generated/server";
 import {
   currencyEventTypeValidator,
   currencyStatusValidator,
@@ -55,6 +57,12 @@ const currencySummaryValidator = v.object({
   recordState: recordStateValidator,
 });
 
+const currencyRecordValidator = v.object({
+  currency: currencySummaryValidator,
+  country: countryOutputValidator,
+  sources: v.array(sourceOutputValidator),
+});
+
 const metricWithSourceValidator = v.object({
   metric: v.string(),
   observationDate: historicalDateValidator,
@@ -84,6 +92,66 @@ function requireSourceCount(sourceIds: readonly unknown[], recordState: "develop
   if (recordState === "verified" && sourceIds.length === 0) {
     throw new ConvexError("Verified records require at least one source.");
   }
+}
+
+async function resolveCurrencyRecord(
+  ctx: QueryCtx,
+  currency: Doc<"currencies">,
+  requiredSeedVersion?: string,
+) {
+  const country = await ctx.db.get(currency.countryId);
+  if (country === null) {
+    throw new ConvexError("Currency country reference is invalid.");
+  }
+  const sources = await Promise.all(currency.sourceIds.map((sourceId) => ctx.db.get(sourceId)));
+  const resolvedSources = sources.filter((source) => source !== null);
+  if (resolvedSources.length !== sources.length) {
+    throw new ConvexError("Currency source reference is invalid.");
+  }
+  if (
+    requiredSeedVersion !== undefined &&
+    (currency.seedVersion !== requiredSeedVersion ||
+      country.seedVersion !== requiredSeedVersion ||
+      resolvedSources.some((source) => source.seedVersion !== requiredSeedVersion))
+  ) {
+    throw new ConvexError("Verified seed graph contains a version mismatch.");
+  }
+
+  return {
+    currency: {
+      id: currency._id,
+      name: currency.name,
+      slug: currency.slug,
+      symbol: currency.symbol ?? null,
+      currencyType: currency.currencyType,
+      status: currency.status,
+      startDate: currency.startDate,
+      endDate: currency.endDate ?? null,
+      replacementCurrencyId: currency.replacementCurrencyId ?? null,
+      replacementCurrencyName: currency.replacementCurrencyName ?? null,
+      primaryFailureCause: currency.primaryFailureCause ?? null,
+      failureCauses: currency.failureCauses,
+      summary: currency.summary ?? null,
+      historicalContext: currency.historicalContext ?? null,
+      recordState: currency.recordState,
+    },
+    country: {
+      id: country._id,
+      name: country.name,
+      slug: country.slug,
+      isoCode: country.isoCode ?? null,
+      region: country.region,
+    },
+    sources: resolvedSources.map((source) => ({
+      id: source._id,
+      title: source.title,
+      publisher: source.publisher,
+      url: source.url,
+      publicationDate: source.publicationDate ?? null,
+      accessedAt: source.accessedAt,
+      sourceType: source.sourceType,
+    })),
+  };
 }
 
 export const createSource = internalMutation({
@@ -300,14 +368,7 @@ export const createDollarMetric = internalMutation({
 
 export const getCurrencyBySlug = query({
   args: { slug: v.string() },
-  returns: v.union(
-    v.null(),
-    v.object({
-      currency: currencySummaryValidator,
-      country: countryOutputValidator,
-      sources: v.array(sourceOutputValidator),
-    }),
-  ),
+  returns: v.union(v.null(), currencyRecordValidator),
   handler: async (ctx, args) => {
     const currency = await ctx.db
       .query("currencies")
@@ -317,51 +378,49 @@ export const getCurrencyBySlug = query({
       return null;
     }
 
-    const country = await ctx.db.get(currency.countryId);
-    if (country === null) {
-      throw new ConvexError("Currency country reference is invalid.");
-    }
-    const sources = await Promise.all(currency.sourceIds.map((sourceId) => ctx.db.get(sourceId)));
-    const resolvedSources = sources.filter((source) => source !== null);
-    if (resolvedSources.length !== sources.length) {
-      throw new ConvexError("Currency source reference is invalid.");
-    }
+    return await resolveCurrencyRecord(ctx, currency);
+  },
+});
 
+const verifiedSeedVersionValidator = v.literal(VERIFIED_CURRENCY_SEED_VERSION);
+
+export const listVerifiedCurrencySeed = query({
+  args: { version: verifiedSeedVersionValidator },
+  returns: v.object({
+    version: verifiedSeedVersionValidator,
+    records: v.array(currencyRecordValidator),
+  }),
+  handler: async (ctx, args) => {
+    const currencies = await ctx.db
+      .query("currencies")
+      .withIndex("by_seed_version", (q) => q.eq("seedVersion", args.version))
+      .take(51);
+    if (currencies.length === 0) {
+      throw new ConvexError("Verified currency seed is empty.");
+    }
+    if (currencies.length > 50) {
+      throw new ConvexError("Verified currency seed exceeds the bounded read limit.");
+    }
     return {
-      currency: {
-        id: currency._id,
-        name: currency.name,
-        slug: currency.slug,
-        symbol: currency.symbol ?? null,
-        currencyType: currency.currencyType,
-        status: currency.status,
-        startDate: currency.startDate,
-        endDate: currency.endDate ?? null,
-        replacementCurrencyId: currency.replacementCurrencyId ?? null,
-        replacementCurrencyName: currency.replacementCurrencyName ?? null,
-        primaryFailureCause: currency.primaryFailureCause ?? null,
-        failureCauses: currency.failureCauses,
-        summary: currency.summary ?? null,
-        historicalContext: currency.historicalContext ?? null,
-        recordState: currency.recordState,
-      },
-      country: {
-        id: country._id,
-        name: country.name,
-        slug: country.slug,
-        isoCode: country.isoCode ?? null,
-        region: country.region,
-      },
-      sources: resolvedSources.map((source) => ({
-        id: source._id,
-        title: source.title,
-        publisher: source.publisher,
-        url: source.url,
-        publicationDate: source.publicationDate ?? null,
-        accessedAt: source.accessedAt,
-        sourceType: source.sourceType,
-      })),
+      version: args.version,
+      records: await Promise.all(
+        currencies.map((currency) => resolveCurrencyRecord(ctx, currency, args.version)),
+      ),
     };
+  },
+});
+
+export const getVerifiedCurrencySeedBySlug = query({
+  args: { version: verifiedSeedVersionValidator, slug: v.string() },
+  returns: v.union(v.null(), currencyRecordValidator),
+  handler: async (ctx, args) => {
+    requireSlug(args.slug);
+    const currency = await ctx.db
+      .query("currencies")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+    if (currency === null || currency.seedVersion !== args.version) return null;
+    return await resolveCurrencyRecord(ctx, currency, args.version);
   },
 });
 

@@ -15,6 +15,8 @@ describe("currency archive page", () => {
     expect(html).toContain('<option value="europe" selected="">europe</option>');
     expect(html).toContain('<option value="replaced" selected="">replaced</option>');
     expect(html).toContain("2 active filters");
+    expect(html).toContain("Repository-backed verified seed");
+    expect(html).toContain('data-research-source="repository"');
   });
 
   it("keeps inflation severity unavailable instead of inferring it", async () => {

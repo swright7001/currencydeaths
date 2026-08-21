@@ -17,6 +17,14 @@ import {
   buildHomepageDashboard,
   type HomepageDeliveryState,
 } from "../lib/data/homepage-dashboard";
+import {
+  loadResearchCollection,
+  type ResearchDeliverySource,
+} from "../lib/data/research-repository";
+import {
+  verifiedCurrencySeed,
+  type VerifiedCurrencyDataset,
+} from "../lib/data/verified-currency-seed";
 
 export const metadata: Metadata = {
   title: { absolute: "CurrencyDeaths — Monetary History and Dollar Stress Research" },
@@ -27,8 +35,14 @@ export const metadata: Metadata = {
 
 export function Homepage({
   deliveryState = "ready",
-}: Readonly<{ deliveryState?: HomepageDeliveryState }>) {
-  const dashboard = buildHomepageDashboard(deliveryState);
+  dataset = verifiedCurrencySeed,
+  researchSource = "repository",
+}: Readonly<{
+  deliveryState?: HomepageDeliveryState;
+  dataset?: VerifiedCurrencyDataset;
+  researchSource?: ResearchDeliverySource;
+}>) {
+  const dashboard = buildHomepageDashboard(deliveryState, dataset, researchSource);
   const maximumBandCount = Math.max(
     1,
     ...dashboard.lifespan.distribution.map((band) => band.count),
@@ -191,7 +205,7 @@ export function Homepage({
         </div>
         <UsdComparison rows={dashboard.comparisonRows} />
         <p className="homepage-provenance">
-          Dollar inputs: development fixture {dashboard.provenance.dollarFixtureVersion}, accessed {dashboard.provenance.dollarAsOf}. Historical records: {dashboard.provenance.currencySeedVersion}. <Link href="/dollar">Inspect dollar sources →</Link>
+          Dollar inputs: development fixture {dashboard.provenance.dollarFixtureVersion}, accessed {dashboard.provenance.dollarAsOf}. Historical records: {dashboard.provenance.currencySeedVersion} ({dashboard.provenance.currencyDelivery}-backed). <Link href="/dollar">Inspect dollar sources →</Link>
         </p>
       </section>
 
@@ -224,6 +238,7 @@ export function Homepage({
   );
 }
 
-export default function Home() {
-  return <Homepage />;
+export default async function Home() {
+  const loaded = await loadResearchCollection();
+  return <Homepage dataset={loaded.dataset} researchSource={loaded.source} />;
 }
