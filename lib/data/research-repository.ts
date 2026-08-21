@@ -289,9 +289,20 @@ export async function loadResearchCurrency(
   try {
     const response = await (options.fetcher ?? defaultFetcher).bySlug(url, slug);
     const dataset = parseConvexResearchCurrency(response);
-    return dataset === null
-      ? null
-      : { source: "convex", sourceLabel: "Convex-backed verified seed", dataset };
+    if (dataset === null) {
+      if (expectedCurrencies.has(slug)) {
+        throw new ResearchDataError(
+          "Configured research data is missing a required verified currency.",
+        );
+      }
+      return null;
+    }
+    if (dataset.currencies[0]?.slug !== slug) {
+      throw new ResearchDataError(
+        "Configured research data returned a currency that does not match the requested slug.",
+      );
+    }
+    return { source: "convex", sourceLabel: "Convex-backed verified seed", dataset };
   } catch (error) {
     if (error instanceof ResearchDataError) throw error;
     throw new ResearchDataError(

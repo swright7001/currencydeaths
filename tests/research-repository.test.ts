@@ -98,7 +98,7 @@ describe("server research repository", () => {
     expect(transport.list).toHaveBeenCalledWith(configuredUrl);
   });
 
-  it("loads one configured slug and preserves not-found behavior", async () => {
+  it("loads one configured slug and preserves unknown-slug not-found behavior", async () => {
     const record = convexRecord("greek-drachma");
     const loaded = await loadResearchCurrency("greek-drachma", {
       convexUrl: configuredUrl,
@@ -115,6 +115,24 @@ describe("server research repository", () => {
         fetcher: fetcher(null, null),
       }),
     ).toBeNull();
+  });
+
+  it("fails closed when configured Convex omits a required verified currency", async () => {
+    await expect(
+      loadResearchCurrency("german-papiermark", {
+        convexUrl: configuredUrl,
+        fetcher: fetcher(null, null),
+      }),
+    ).rejects.toThrow("missing a required verified currency");
+  });
+
+  it("rejects a configured slug response for a different approved currency", async () => {
+    await expect(
+      loadResearchCurrency("german-papiermark", {
+        convexUrl: configuredUrl,
+        fetcher: fetcher(null, convexRecord("greek-drachma")),
+      }),
+    ).rejects.toThrow("does not match the requested slug");
   });
 
   it("rejects empty, malformed, unsupported, duplicate, and missing-source payloads", () => {
