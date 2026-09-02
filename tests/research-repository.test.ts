@@ -1,4 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { connectionMock, fetchQueryMock } = vi.hoisted(() => ({
+  connectionMock: vi.fn(async () => undefined),
+  fetchQueryMock: vi.fn(),
+}));
+
+vi.mock("next/server", () => ({ connection: connectionMock }));
+vi.mock("convex/nextjs", () => ({ fetchQuery: fetchQueryMock }));
 import {
   ResearchDataError,
   loadResearchCollection,
@@ -79,6 +87,11 @@ function fetcher(listValue: unknown, slugValue: unknown = null) {
 }
 
 describe("server research repository", () => {
+  beforeEach(() => {
+    connectionMock.mockClear();
+    fetchQueryMock.mockReset();
+  });
+
   it("uses the repository seed only when Convex is unconfigured", async () => {
     const transport = fetcher(convexCollection());
     const loaded = await loadResearchCollection({ convexUrl: "", fetcher: transport });
@@ -96,6 +109,16 @@ describe("server research repository", () => {
     expect(loaded.source).toBe("convex");
     expect(loaded.dataset).toEqual(verifiedCurrencySeed);
     expect(transport.list).toHaveBeenCalledWith(configuredUrl);
+  });
+
+  it("waits for request time before the configured production Convex query", async () => {
+    fetchQueryMock.mockResolvedValueOnce(convexCollection());
+
+    const loaded = await loadResearchCollection({ convexUrl: configuredUrl });
+
+    expect(connectionMock).toHaveBeenCalledOnce();
+    expect(fetchQueryMock).toHaveBeenCalledOnce();
+    expect(loaded.source).toBe("convex");
   });
 
   it("accepts equivalent Convex objects regardless of serialized field order", () => {
