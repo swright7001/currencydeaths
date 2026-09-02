@@ -1,6 +1,8 @@
 import {
   calculateDollarStressScore,
   calculateDollarStressSensitivity,
+  type DollarStressContribution,
+  type DollarStressInput,
 } from "../calculations/dollar-stress-score";
 import {
   dollarStressMethodologyV1,
@@ -74,11 +76,13 @@ export type DollarDashboardModel = Readonly<{
       freshness: "current" | "stale";
       observationDate: string;
       sourceUpdatedAt: number;
+      accessedAt: number;
       sourceSeriesId: string;
       sourceUrl: string;
       lowerAnchor: number;
       upperAnchor: number;
       saturated: boolean;
+      derivation: DollarStressContribution["derivation"];
     }>[];
     sensitivity: readonly Readonly<{ id: string; label: string; score: number }>[];
     missingComponents: readonly Readonly<{
@@ -137,6 +141,52 @@ function buildTrend(observations: readonly DollarMetricQueryObservation[]) {
     value: `${change > 0 ? "+" : ""}${change.toFixed(2)}%`,
     context: `relative change from ${formatHistoricalMonth(previous.observationDate)}`,
   };
+}
+
+const stressMetricByComponent = {
+  monetary_expansion: "m2",
+  consumer_price_inflation: "cpi",
+  federal_debt_burden: "federal_debt_to_gdp",
+} as const satisfies Record<DollarStressInput["componentId"], DollarMetricKey>;
+
+function historicalMonthToIso(date: HistoricalDate) {
+  if (date.precision !== "month" || date.month === undefined) {
+    throw new Error("Dollar stress inputs require month-precision observations.");
+  }
+  return `${String(date.year).padStart(4, "0")}-${String(date.month).padStart(2, "0")}-01`;
+}
+
+function stressInputMatchesSeries(
+  input: DollarStressInput,
+  series: DollarMetricSeriesContract | undefined,
+) {
+  if (series === undefined) return false;
+  const latest = series.latest;
+  const expected =
+    input.input.kind === "direct"
+      ? {
+          value: input.input.value,
+          observationDate: input.input.observationDate,
+          sourceUpdatedAt: input.input.sourceUpdatedAt,
+          accessedAt: input.input.accessedAt,
+          sourceUnit: input.input.sourceUnit,
+        }
+      : {
+          value: input.input.current.value,
+          observationDate: input.input.current.observationDate,
+          sourceUpdatedAt: input.input.current.sourceUpdatedAt,
+          accessedAt: input.input.current.accessedAt,
+          sourceUnit: input.input.sourceUnit,
+        };
+  return (
+    latest.sourceSeriesId === input.sourceSeriesId &&
+    historicalMonthToIso(latest.observationDate) === expected.observationDate &&
+    latest.value === expected.value &&
+    latest.unit === expected.sourceUnit &&
+    latest.sourceUpdatedAt === expected.sourceUpdatedAt &&
+    latest.source.accessedAt === expected.accessedAt &&
+    latest.recordState === "verified"
+  );
 }
 
 export function buildSnapshotDollarMetricSeries(
@@ -198,22 +248,20 @@ export function buildSnapshotDollarMetricSeries(
 export function buildDollarDashboardFromSeries(
   seriesResults: readonly DollarMetricSeriesContract[],
 ): DollarDashboardModel {
-  if (seriesResults.length !== dollarMetricKeys.length) {
-    throw new Error("Dollar dashboard requires the exact approved query result set.");
-  }
   const resultByMetric = new Map(seriesResults.map((series) => [series.metric, series]));
-  if (resultByMetric.size !== dollarMetricKeys.length) {
+  if (resultByMetric.size !== seriesResults.length) {
     throw new Error("Dollar dashboard query results contain duplicate metrics.");
   }
-  const freshnessAsOf = seriesResults[0].freshness.asOf;
+  const freshnessAsOf =
+    seriesResults[0]?.freshness.asOf ?? dollarMetricSnapshot.retrievedAt;
   if (seriesResults.some((series) => series.freshness.asOf !== freshnessAsOf)) {
     throw new Error("Dollar dashboard query results require one freshness as-of time.");
   }
-  const metrics = dollarMetricKeys.map((key): DollarDashboardMetric => {
+  const metrics = dollarMetricKeys.flatMap((key): DollarDashboardMetric[] => {
     const series = resultByMetric.get(key);
-    if (series === undefined) throw new Error(`Dollar dashboard query result is missing ${key}.`);
+    if (series === undefined) return [];
     const trend = buildTrend(series.directionWindow);
-    return {
+    return [{
       key,
       label: metricLabels[key],
       displayValue: formatMetricValue(key, series.latest.value),
@@ -225,12 +273,19 @@ export function buildDollarDashboardFromSeries(
       observations: series.contextSeries,
       source: series.latest.source,
       freshness: series.freshness,
-    };
+    }];
   });
 
+  const candidateStressInputs = buildVerifiedDollarStressInputs(freshnessAsOf);
+  const boundStressInputs = candidateStressInputs.filter((input) =>
+    stressInputMatchesSeries(
+      input,
+      resultByMetric.get(stressMetricByComponent[input.componentId]),
+    ),
+  );
   const stressResult = calculateDollarStressScore(
     dollarStressMethodologyV1,
-    buildVerifiedDollarStressInputs(),
+    boundStressInputs,
   );
   const componentById = new Map(
     dollarStressMethodologyV1.components.map((component) => [component.id, component]),
@@ -266,11 +321,13 @@ export function buildDollarDashboardFromSeries(
           freshness: contribution.freshness,
           observationDate: contribution.observationDate,
           sourceUpdatedAt: contribution.sourceUpdatedAt,
+          accessedAt: contribution.accessedAt,
           sourceSeriesId: contribution.sourceSeriesId,
           sourceUrl: component.sourceUrl,
           lowerAnchor: component.healthyBoundary,
           upperAnchor: component.extremeBoundary,
           saturated: contribution.normalizedScore >= 100,
+          derivation: contribution.derivation,
         };
       }),
       sensitivity:

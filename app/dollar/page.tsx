@@ -25,6 +25,10 @@ function formatStressObservation(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
+function formatStressSourceValue(value: number, unit: string) {
+  return `${value.toLocaleString("en-US", { maximumFractionDigits: 5 })} ${unit}`;
+}
+
 export default function DollarDashboardPage() {
   const dashboard = buildSnapshotDollarDashboard();
 
@@ -100,6 +104,32 @@ export default function DollarDashboardPage() {
                 <dt>Baseline p95</dt><dd>{component.upperAnchor.toFixed(2)}</dd>
                 <dt>Normalized</dt><dd>{component.normalizedScore.toFixed(1)}</dd>
                 <dt>Contribution</dt><dd>{component.pointContribution.toFixed(1)} pts</dd>
+                {component.derivation === null ? (
+                  <>
+                    <dt>Source observation</dt>
+                    <dd>{formatStressSourceValue(component.rawValue, "% of GDP")}</dd>
+                  </>
+                ) : (
+                  <>
+                    <dt>Current observation</dt>
+                    <dd>
+                      {formatStressSourceValue(
+                        component.derivation.current.value,
+                        component.id === "monetary_expansion" ? "billions USD · SA" : "index 1982–84=100 · SA",
+                      )} · {formatStressObservation(component.derivation.current.observationDate)}
+                    </dd>
+                    <dt>Prior-year observation</dt>
+                    <dd>
+                      {formatStressSourceValue(
+                        component.derivation.priorYear.value,
+                        component.id === "monetary_expansion" ? "billions USD · SA" : "index 1982–84=100 · SA",
+                      )} · {formatStressObservation(component.derivation.priorYear.observationDate)}
+                    </dd>
+                    <dt>Formula</dt><dd>((current ÷ prior year) − 1) × 100</dd>
+                  </>
+                )}
+                <dt>Source updated</dt><dd>{formatUtcDate(component.sourceUpdatedAt)}</dd>
+                <dt>Accessed</dt><dd>{formatUtcDate(component.accessedAt)}</dd>
               </dl>
             </li>
           ))}

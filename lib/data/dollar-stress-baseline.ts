@@ -57,14 +57,13 @@ function observationsFor(metric: BaselineMetric): readonly BaselineObservation[]
   return baselineArtifact.observations[metric] as readonly BaselineObservation[];
 }
 
-function freshnessFor(componentId: DollarStressComponentId) {
+function freshnessFor(componentId: DollarStressComponentId, asOf: number) {
   const metric = componentMetric[componentId];
   const source = sourceFor(metric);
   const component = dollarStressMethodologyV1.components.find(
     (candidate) => candidate.id === componentId,
   );
   if (component === undefined) throw new Error(`Dollar stress component missing: ${componentId}.`);
-  const asOf = Date.parse(baselineArtifact.retrievedAt);
   const sourceUpdatedAt = Date.parse(source.sourceUpdatedAt);
   const latestDate = baselineArtifact.expectedLatestPeriods[metric];
   const periodEndedAt = periodEnd(latestDate, source.frequency as "monthly" | "quarterly");
@@ -78,7 +77,7 @@ function freshnessFor(componentId: DollarStressComponentId) {
         ? ("current" as const)
         : ("stale" as const),
     sourceUpdatedAt,
-    accessedAt: asOf,
+    accessedAt: Date.parse(baselineArtifact.retrievedAt),
     latestDate,
   };
 }
@@ -115,11 +114,16 @@ export function calculateDollarStressBaselineAnchors() {
   return anchors;
 }
 
-export function buildVerifiedDollarStressInputs(): readonly DollarStressInput[] {
+export function buildVerifiedDollarStressInputs(
+  asOf = Date.parse(baselineArtifact.retrievedAt),
+): readonly DollarStressInput[] {
+  if (!Number.isFinite(asOf)) {
+    throw new Error("Dollar stress freshness as-of time must be finite.");
+  }
   return dollarStressMethodologyV1.components.map((component): DollarStressInput => {
     const metric = componentMetric[component.id];
     const values = new Map(observationsFor(metric).map((row) => [row.date, row.value]));
-    const timing = freshnessFor(component.id);
+    const timing = freshnessFor(component.id, asOf);
     const currentValue = requireValue(values, timing.latestDate, component.label);
     const base = {
       componentId: component.id,
