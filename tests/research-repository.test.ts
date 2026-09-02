@@ -98,6 +98,24 @@ describe("server research repository", () => {
     expect(transport.list).toHaveBeenCalledWith(configuredUrl);
   });
 
+  it("accepts equivalent Convex objects regardless of serialized field order", () => {
+    const collection = convexCollection();
+    const record = collection.records[0];
+    record.currency.startDate = {
+      day: record.currency.startDate.day,
+      month: record.currency.startDate.month,
+      precision: record.currency.startDate.precision,
+      year: record.currency.startDate.year,
+    } as typeof record.currency.startDate;
+    record.currency.endDate = {
+      month: record.currency.endDate.month,
+      precision: record.currency.endDate.precision,
+      year: record.currency.endDate.year,
+    } as typeof record.currency.endDate;
+
+    expect(parseConvexResearchCollection(collection)).toEqual(verifiedCurrencySeed);
+  });
+
   it("loads one configured slug and preserves unknown-slug not-found behavior", async () => {
     const record = convexRecord("greek-drachma");
     const loaded = await loadResearchCurrency("greek-drachma", {

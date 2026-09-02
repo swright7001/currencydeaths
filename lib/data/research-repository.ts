@@ -78,8 +78,19 @@ function finiteNumber(value: unknown, label: string): number {
   return value;
 }
 
+function canonicalJsonValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalJsonValue);
+  if (typeof value !== "object" || value === null) return value;
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => [key, canonicalJsonValue(entry)]),
+  );
+}
+
 function requireEqual(actual: unknown, expected: unknown, label: string) {
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+  if (JSON.stringify(canonicalJsonValue(actual)) !== JSON.stringify(canonicalJsonValue(expected))) {
     throw new ResearchDataError(`Configured research data does not match ${label}.`);
   }
 }
