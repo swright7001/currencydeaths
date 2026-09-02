@@ -1,4 +1,5 @@
 import { fetchQuery } from "convex/nextjs";
+import { connection } from "next/server";
 import { api } from "../../convex/_generated/api";
 import { getOptionalConvexUrl } from "../env/convex";
 import {
@@ -256,6 +257,7 @@ export async function loadResearchCollection(
       dataset: verifiedCurrencySeed,
     };
   }
+  if (options.fetcher === undefined) await connection();
   try {
     const response = await (options.fetcher ?? defaultFetcher).list(url);
     return {
@@ -297,6 +299,7 @@ export async function loadResearchCurrency(
       },
     };
   }
+  if (options.fetcher === undefined) await connection();
   try {
     const response = await (options.fetcher ?? defaultFetcher).bySlug(url, slug);
     const dataset = parseConvexResearchCurrency(response);
