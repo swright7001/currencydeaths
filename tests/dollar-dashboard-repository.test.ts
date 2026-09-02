@@ -66,7 +66,16 @@ describe("dollar dashboard repository", () => {
       fetcher: async () => null,
     });
     expect(dashboard.datasetVersion).toBe("usd-metrics-verified-2026-09-02");
-    expect(dashboard.freshnessBasis).toBe("snapshot_retrieval");
+    expect(dashboard.freshnessBasis).toBe("explicit_as_of");
     expect(dashboard.stress.score).toBe(43.5);
+
+    const stale = await loadDollarDashboard({
+      convexUrl: "https://example.convex.cloud",
+      asOf: Date.UTC(2027, 1, 1),
+      fetcher: async () => null,
+    });
+    expect(stale.freshnessBasis).toBe("explicit_as_of");
+    expect(stale.metrics.every((metric) => metric.freshness.state === "stale")).toBe(true);
+    expect(stale.stress.score).toBeNull();
   });
 });

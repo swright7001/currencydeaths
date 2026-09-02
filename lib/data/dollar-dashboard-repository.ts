@@ -51,7 +51,7 @@ export async function loadDollarDashboard(
       // A configured Convex deployment may exist before any dollar dataset has
       // been activated. That explicit all-absent state keeps the audited
       // repository snapshot as the baseline; partial or failed reads never do.
-      return buildSnapshotDollarDashboard();
+      return buildSnapshotDollarDashboard(asOf);
     }
     if (results.some((result) => result === null)) {
       throw new DollarDashboardDataError(
