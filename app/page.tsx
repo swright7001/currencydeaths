@@ -205,7 +205,7 @@ export function Homepage({
         </div>
         <UsdComparison rows={dashboard.comparisonRows} />
         <p className="homepage-provenance">
-          Dollar inputs: development fixture {dashboard.provenance.dollarFixtureVersion}, accessed {dashboard.provenance.dollarAsOf}. Historical records: {dashboard.provenance.currencySeedVersion} ({dashboard.provenance.currencyDelivery}-backed). <Link href="/dollar">Inspect dollar sources →</Link>
+          Dollar inputs: verified dated snapshot {dashboard.provenance.dollarDatasetVersion}, retrieved {dashboard.provenance.dollarAsOf}. Historical records: {dashboard.provenance.currencySeedVersion} ({dashboard.provenance.currencyDelivery}-backed). <Link href="/dollar">Inspect dollar sources →</Link>
         </p>
       </section>
 

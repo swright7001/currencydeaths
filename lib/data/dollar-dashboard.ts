@@ -7,9 +7,9 @@ import {
   type DollarMetricKey,
 } from "./dollar-metric-contracts";
 import {
-  assertDollarMetricFixtureIntegrity,
-  dollarMetricFixtures,
-} from "./dollar-metric-fixtures";
+  assertDollarMetricSnapshotIntegrity,
+  dollarMetricSnapshot,
+} from "./dollar-metric-snapshot";
 import type {
   DollarMetricQueryObservation,
   DollarMetricSeriesContract,
@@ -43,8 +43,8 @@ export type DollarDashboardMetric = Readonly<{
 }>;
 
 export type DollarDashboardModel = Readonly<{
-  fixtureVersion: string;
-  freshnessBasis: "fixture_access" | "explicit_as_of";
+  datasetVersion: string;
+  freshnessBasis: "snapshot_retrieval" | "explicit_as_of";
   freshnessAsOf: number;
   metrics: readonly DollarDashboardMetric[];
   stress: Readonly<{
@@ -109,26 +109,26 @@ function buildTrend(observations: readonly DollarMetricQueryObservation[]) {
   };
 }
 
-export function buildFixtureDollarMetricSeries(
+export function buildSnapshotDollarMetricSeries(
   asOf: number,
 ): DollarMetricSeriesContract[] {
-  assertDollarMetricFixtureIntegrity();
+  assertDollarMetricSnapshotIntegrity();
   return dollarMetricKeys.map((metric) => {
-    const sourceFixture = dollarMetricFixtures.sources.find(
+    const sourceSnapshot = dollarMetricSnapshot.sources.find(
       (source) => source.sourceSeriesId ===
-        dollarMetricFixtures.observations.find((item) => item.metric === metric)?.sourceSeriesId,
+        dollarMetricSnapshot.observations.find((item) => item.metric === metric)?.sourceSeriesId,
     );
-    if (sourceFixture === undefined) throw new Error(`Fixture query source missing: ${metric}.`);
+    if (sourceSnapshot === undefined) throw new Error(`Snapshot query source missing: ${metric}.`);
     const source = {
-      id: `development-fixture-source:${sourceFixture.key}`,
-      title: sourceFixture.title,
-      publisher: sourceFixture.publisher,
-      url: sourceFixture.url,
+      id: `verified-snapshot-source:${sourceSnapshot.key}`,
+      title: sourceSnapshot.title,
+      publisher: sourceSnapshot.publisher,
+      url: sourceSnapshot.url,
       publicationDate: null,
-      accessedAt: dollarMetricFixtures.accessedAt,
-      sourceType: sourceFixture.sourceType,
+      accessedAt: dollarMetricSnapshot.retrievedAt,
+      sourceType: sourceSnapshot.sourceType,
     } satisfies DollarMetricQueryObservation["source"];
-    const contextSeries = dollarMetricFixtures.observations
+    const contextSeries = dollarMetricSnapshot.observations
       .filter((item) => item.metric === metric)
       .sort(
         (left, right) =>
@@ -137,7 +137,7 @@ export function buildFixtureDollarMetricSeries(
       )
       .map(
         (item): DollarMetricQueryObservation => ({
-          id: `development-fixture:${metric}:${historicalDateToKey(item.observationDate)}`,
+          id: `verified-snapshot:${metric}:${historicalDateToKey(item.observationDate)}`,
           metric: item.metric,
           observationDate: item.observationDate,
           value: item.value,
@@ -145,14 +145,14 @@ export function buildFixtureDollarMetricSeries(
           frequency: item.frequency,
           sourceSeriesId: item.sourceSeriesId,
           sourceUpdatedAt: item.sourceUpdatedAt,
-          fixtureBatchVersion: dollarMetricFixtures.version,
+          fixtureBatchVersion: null,
           notes: item.notes,
-          recordState: "development_fixture",
+          recordState: "verified",
           source,
         }),
       );
     const latest = contextSeries[contextSeries.length - 1];
-    if (latest === undefined) throw new Error(`Fixture query series missing: ${metric}.`);
+    if (latest === undefined) throw new Error(`Snapshot query series missing: ${metric}.`);
     return {
       metric,
       latest,
@@ -160,8 +160,7 @@ export function buildFixtureDollarMetricSeries(
       contextSeries,
       gaps: findDollarMetricGaps(contextSeries, latest.frequency),
       freshness: calculateDollarMetricFreshness(metric, latest.sourceUpdatedAt, asOf),
-      developmentNotice:
-        "Development fixtures — not live data. Values may be revised; consult the cited source.",
+      developmentNotice: null,
     } satisfies DollarMetricSeriesContract;
   });
 }
@@ -208,10 +207,10 @@ export function buildDollarDashboardFromSeries(
   );
 
   return {
-    fixtureVersion: dollarMetricFixtures.version,
+    datasetVersion: dollarMetricSnapshot.version,
     freshnessBasis:
-      freshnessAsOf === dollarMetricFixtures.accessedAt
-        ? "fixture_access"
+      freshnessAsOf === dollarMetricSnapshot.retrievedAt
+        ? "snapshot_retrieval"
         : "explicit_as_of",
     freshnessAsOf,
     metrics,
@@ -227,16 +226,16 @@ export function buildDollarDashboardFromSeries(
           weight: component.weight,
           reason:
             component.inputKind === "year_over_year_percent_change"
-              ? "Prior-year observation is absent from the development fixture."
-              : "Exact-day provenance is not represented by the month-precision fixture.",
+              ? "Prior-year observation is absent from the verified snapshot."
+              : "Exact-day provenance is not represented by the month-precision snapshot.",
         };
       }),
     },
   };
 }
 
-export function buildFixtureDollarDashboard(
-  asOf = dollarMetricFixtures.accessedAt,
+export function buildSnapshotDollarDashboard(
+  asOf = dollarMetricSnapshot.retrievedAt,
 ) {
-  return buildDollarDashboardFromSeries(buildFixtureDollarMetricSeries(asOf));
+  return buildDollarDashboardFromSeries(buildSnapshotDollarMetricSeries(asOf));
 }

@@ -5,25 +5,25 @@ import {
   validateDollarMetricObservation,
 } from "../lib/data/dollar-metric-contracts";
 import {
-  assertDollarMetricFixtureIntegrity,
-  dollarMetricFixtures,
-} from "../lib/data/dollar-metric-fixtures";
+  assertDollarMetricSnapshotIntegrity,
+  dollarMetricSnapshot,
+} from "../lib/data/dollar-metric-snapshot";
 
 describe("dollar metric contracts", () => {
-  it("keeps the official-series development fixtures internally consistent", () => {
-    expect(() => assertDollarMetricFixtureIntegrity()).not.toThrow();
-    expect(dollarMetricFixtures.sources).toHaveLength(3);
-    expect(dollarMetricFixtures.observations).toHaveLength(15);
+  it("keeps the official-series verified snapshot internally consistent", () => {
+    expect(() => assertDollarMetricSnapshotIntegrity()).not.toThrow();
+    expect(dollarMetricSnapshot.sources).toHaveLength(3);
+    expect(dollarMetricSnapshot.observations).toHaveLength(15);
     expect(
-      new Set(dollarMetricFixtures.observations.map((observation) => observation.sourceSeriesId)),
+      new Set(dollarMetricSnapshot.observations.map((observation) => observation.sourceSeriesId)),
     ).toEqual(new Set(["M2SL", "CPIAUCSL", "GFDEGDQ188S"]));
     expect(
-      dollarMetricFixtures.observations.every((observation) =>
-        observation.notes.includes("Development fixture"),
+      dollarMetricSnapshot.observations.every((observation) =>
+        observation.notes.includes("Verified dated snapshot"),
       ),
     ).toBe(true);
     expect(
-      dollarMetricFixtures.observations
+      dollarMetricSnapshot.observations
         .filter((observation) => observation.metric === "federal_debt_to_gdp")
         .map(({ observationDate }) => [observationDate.year, observationDate.month]),
     ).toEqual([

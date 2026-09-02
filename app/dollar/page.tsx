@@ -5,7 +5,7 @@ import { MetricCard } from "../../components/metrics/metric-card";
 import { MetricTrend } from "../../components/metrics/metric-trend";
 import { SourceCitation } from "../../components/research/source-citation";
 import {
-  buildFixtureDollarDashboard,
+  buildSnapshotDollarDashboard,
   formatHistoricalMonth,
   formatUtcDate,
 } from "../../lib/data/dollar-dashboard";
@@ -13,12 +13,12 @@ import {
 export const metadata: Metadata = {
   title: "U.S. Dollar Research Dashboard",
   description:
-    "Inspect source-attributed development fixtures for M2, CPI, federal debt-to-GDP, and the experimental Dollar Stress Score methodology.",
+    "Inspect source-verified dated snapshots for M2, CPI, federal debt-to-GDP, and the experimental Dollar Stress Score methodology.",
   alternates: { canonical: "/dollar" },
 };
 
 export default function DollarDashboardPage() {
-  const dashboard = buildFixtureDollarDashboard();
+  const dashboard = buildSnapshotDollarDashboard();
 
   return (
     <main id="main-content" className="dollar-page">
@@ -28,14 +28,14 @@ export default function DollarDashboardPage() {
             <p className="section-kicker">U.S. dollar / evidence monitor</p>
             <h1>Pressure, with provenance.</h1>
             <p>
-              Three approved FRED series, shown as development fixtures—not live
+              Three approved FRED series, shown as verified dated snapshots—not live
               readings, trading signals, or a forecast of monetary failure.
             </p>
           </div>
           <aside aria-label="Dashboard data release">
-            <span>Development data only</span>
+            <span>Verified snapshot</span>
             <dl>
-              <div><dt>Fixture version</dt><dd>{dashboard.fixtureVersion}</dd></div>
+              <div><dt>Dataset version</dt><dd>{dashboard.datasetVersion}</dd></div>
               <div><dt>Freshness evaluated</dt><dd>{formatUtcDate(dashboard.freshnessAsOf)}</dd></div>
               <div><dt>Approved series</dt><dd>{dashboard.metrics.length}</dd></div>
               <div><dt>Live ingestion</dt><dd>Offline</dd></div>
@@ -49,7 +49,7 @@ export default function DollarDashboardPage() {
           <p className="section-kicker">Experimental stress model</p>
           <h2 id="dollar-stress-title">Score withheld</h2>
           <p>
-            The fixture cannot satisfy every required input at approved precision.
+            The snapshot cannot satisfy every required input at approved precision.
             Missing data is not converted to zero and no partial total is published.
           </p>
           <Link href="/methodology/dollar-stress-score">
@@ -70,7 +70,7 @@ export default function DollarDashboardPage() {
       <section className="shell-container dollar-metrics" aria-labelledby="dollar-metrics-title">
         <header className="dollar-section-heading">
           <div>
-            <p className="section-kicker">Current fixture readings / source adjacent</p>
+            <p className="section-kicker">Verified dated readings / source adjacent</p>
             <h2 id="dollar-metrics-title">Three signals. No hidden inputs.</h2>
           </div>
           <p>Direction compares only the two latest stored observations within each series.</p>
@@ -83,12 +83,12 @@ export default function DollarDashboardPage() {
                 label={metric.label}
                 value={metric.displayValue}
                 unit={metric.unitLabel}
-                state="fixture"
-                detail={`Observation ${formatHistoricalMonth(metric.latest.observationDate)} · source updated ${formatUtcDate(metric.latest.sourceUpdatedAt)} · freshness at fixture access: ${metric.freshness.state} (${metric.freshness.ageDays}/${metric.freshness.thresholdDays}-day window).`}
+                state={metric.freshness.state === "stale" ? "stale" : "sourced"}
+                detail={`Observation ${formatHistoricalMonth(metric.latest.observationDate)} · source updated ${formatUtcDate(metric.latest.sourceUpdatedAt)} · freshness at snapshot retrieval: ${metric.freshness.state} (${metric.freshness.ageDays}/${metric.freshness.thresholdDays}-day window).`}
                 accessory={<MetricTrend direction={metric.trend} value={metric.trendValue} context={metric.trendContext} tone="neutral" />}
               />
               <SourceCitation
-                state="fixture"
+                state={metric.freshness.state === "stale" ? "stale" : "sourced"}
                 ariaLabel={`${metric.label} source citation`}
                 claim={`${metric.observations.length} stored ${metric.latest.frequency} observations. Values may be revised; consult the source.`}
                 source={{
@@ -108,7 +108,7 @@ export default function DollarDashboardPage() {
           <header className="dollar-section-heading">
             <div>
               <p className="section-kicker">Short windows / explicit limitation</p>
-              <h2 id="dollar-history-title">Recent fixture history</h2>
+              <h2 id="dollar-history-title">Recent verified history</h2>
             </div>
             <p>These five-point traces demonstrate the interface; they are not long-run evidence.</p>
           </header>
@@ -121,7 +121,7 @@ export default function DollarDashboardPage() {
       <section className="shell-container dollar-limitations" aria-labelledby="dollar-limits-title">
         <div><p className="section-kicker">Interpretation boundary</p><h2 id="dollar-limits-title">Read the gaps first.</h2></div>
         <ul>
-          <li>Fixture values are static and may differ from revised source releases.</li>
+          <li>Snapshot values are static and may differ from later revised source releases.</li>
           <li>Series have different units and frequencies; visual proximity does not make them directly comparable.</li>
           <li>No result here predicts dollar failure, investment returns, or policy outcomes.</li>
         </ul>

@@ -21,7 +21,7 @@ export function buildMetricSeriesChartPoints(values: readonly number[]) {
 }
 
 export function MetricSeriesChart({ metric }: MetricSeriesChartProps) {
-  const description = `${metric.label} development fixture contains ${metric.observations.length} observations from ${formatHistoricalMonth(metric.observations[0].observationDate)} through ${formatHistoricalMonth(metric.latest.observationDate)}. Latest value: ${metric.displayValue} ${metric.unitLabel}.`;
+  const description = `${metric.label} verified dated snapshot contains ${metric.observations.length} observations from ${formatHistoricalMonth(metric.observations[0].observationDate)} through ${formatHistoricalMonth(metric.latest.observationDate)}. Latest value: ${metric.displayValue} ${metric.unitLabel}.`;
   const points = buildMetricSeriesChartPoints(
     metric.observations.map((item) => item.value),
   );
@@ -31,9 +31,9 @@ export function MetricSeriesChart({ metric }: MetricSeriesChartProps) {
     <ChartFrame
       title={metric.label}
       description={description}
-      state="fixture"
+      state={metric.freshness.state === "stale" ? "stale" : "sourced"}
       eyebrow={`${metric.latest.sourceSeriesId} / ${metric.latest.frequency}`}
-      legend={[{ label: "Development fixture", marker: "line", tone: "signal" }]}
+      legend={[{ label: "Verified dated snapshot", marker: "line", tone: "signal" }]}
     >
       <svg viewBox="0 0 640 210" role="img" aria-label={description}>
         <path className="dollar-chart-guides" d="M24 44H616M24 110H616M24 176H616" />

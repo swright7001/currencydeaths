@@ -14,7 +14,7 @@ import { loadResearchCollection } from "../../lib/data/research-repository";
 export const metadata: Metadata = {
   title: "Compare the U.S. Dollar to Currency History",
   description:
-    "Compare sourced U.S. dollar development fixtures with one verified historical currency case without implying identical outcomes.",
+    "Compare source-verified U.S. dollar snapshots with one verified historical currency case without implying identical outcomes.",
   alternates: { canonical: "/compare" },
 };
 
@@ -118,7 +118,7 @@ export default async function ComparePage({ searchParams = Promise.resolve({}) }
       <section className="shell-container compare-ledger" aria-labelledby="compare-ledger-title">
         <header>
           <div>
-            <p className="section-kicker" data-research-source={loaded.source}>Evidence ledger / {comparison.fixtureVersion} / {loaded.sourceLabel}</p>
+            <p className="section-kicker" data-research-source={loaded.source}>Evidence ledger / {comparison.datasetVersion} / {loaded.sourceLabel}</p>
             <h2 id="compare-ledger-title">USD vs {comparison.historical.name}</h2>
           </div>
           <dl aria-label="Comparability summary">

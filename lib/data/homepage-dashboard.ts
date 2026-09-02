@@ -2,7 +2,7 @@ import {
   createCurrencyArchiveRecords,
   displayArchiveLabel,
 } from "./currency-archive";
-import { buildFixtureDollarDashboard, formatUtcDate } from "./dollar-dashboard";
+import { buildSnapshotDollarDashboard, formatUtcDate } from "./dollar-dashboard";
 import {
   buildLifespanResearch,
   createLifespanResearchRecords,
@@ -55,7 +55,7 @@ export function buildHomepageDashboard(
   dataset: VerifiedCurrencyDataset = verifiedCurrencySeed,
   researchSource: ResearchDeliverySource = "repository",
 ) {
-  const dollar = buildFixtureDollarDashboard();
+  const dollar = buildSnapshotDollarDashboard();
   const currencyArchiveRecords = createCurrencyArchiveRecords(dataset);
   const lifespan = buildLifespanResearch(
     createLifespanResearchRecords(currencyArchiveRecords),
@@ -119,7 +119,7 @@ export function buildHomepageDashboard(
     comparisonRows: [
       {
         currency: "U.S. dollar / current system",
-        period: `Fixture accessed ${formatUtcDate(dollar.freshnessAsOf)}`,
+        period: `Snapshot retrieved ${formatUtcDate(dollar.freshnessAsOf)}`,
         evidence: "unavailable" as const,
         event: "Comparable stress score unavailable",
         outcome: "No outcome predicted",
@@ -134,7 +134,7 @@ export function buildHomepageDashboard(
       })),
     ] satisfies readonly HomepageComparisonRow[],
     provenance: {
-      dollarFixtureVersion: dollar.fixtureVersion,
+      dollarDatasetVersion: dollar.datasetVersion,
       dollarAsOf: formatUtcDate(dollar.freshnessAsOf),
       currencySeedVersion: dataset.version,
       currencyDelivery: researchSource,

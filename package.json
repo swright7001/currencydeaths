@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "data:validate": "node scripts/validate-dollar-snapshot.mjs"
   },
   "dependencies": {
     "convex": "^1.43.0",
