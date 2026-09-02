@@ -10,7 +10,7 @@ import {
 } from "../lib/data/dollar-dashboard";
 
 describe("dollar dashboard model", () => {
-  it("builds sorted, source-verified snapshot metrics without publishing a partial score", () => {
+  it("builds sorted metrics and the complete approved experimental score", () => {
     const dashboard = buildSnapshotDollarDashboard();
     expect(dashboard.metrics.map((metric) => metric.key)).toEqual([
       "m2",
@@ -24,9 +24,11 @@ describe("dollar dashboard model", () => {
     expect(dashboard.metrics[1].trendValue).toBe("+0.07%");
     expect(dashboard.metrics[2].trendValue).toBe("+0.02%");
     expect(dashboard.metrics.every((metric) => metric.trendContext.includes("relative change"))).toBe(true);
-    expect(dashboard.stress.status).toBe("unavailable");
-    expect(dashboard.stress.score).toBeNull();
-    expect(dashboard.stress.missingComponents).toHaveLength(3);
+    expect(dashboard.stress.status).toBe("experimental");
+    expect(dashboard.stress.score).toBe(43.5);
+    expect(dashboard.stress.band).toBe("Elevated");
+    expect(dashboard.stress.contributions).toHaveLength(3);
+    expect(dashboard.stress.missingComponents).toHaveLength(0);
   });
 
   it("renders one sparse observation as a centered chart point", () => {
@@ -45,13 +47,32 @@ describe("dollar dashboard model", () => {
     const dashboard = buildSnapshotDollarDashboard(Date.UTC(2027, 1, 1));
     expect(dashboard.freshnessBasis).toBe("explicit_as_of");
     expect(dashboard.metrics.every((metric) => metric.freshness.state === "stale")).toBe(true);
+    expect(dashboard.stress.status).toBe("unavailable");
+    expect(dashboard.stress.score).toBeNull();
+    expect(dashboard.stress.sensitivity).toEqual([]);
   });
 
-  it("rejects incomplete, duplicate, and inconsistent query result sets", () => {
+  it("withholds the score for missing or conflicting dashboard series", () => {
     const series = buildSnapshotDollarMetricSeries(Date.UTC(2026, 8, 2));
-    expect(() => buildDollarDashboardFromSeries(series.slice(0, 2))).toThrow(
-      "exact approved query result set",
-    );
+    const missing = buildDollarDashboardFromSeries(series.slice(0, 2));
+    expect(missing.metrics).toHaveLength(2);
+    expect(missing.stress.score).toBeNull();
+    expect(missing.stress.sensitivity).toEqual([]);
+    expect(missing.stress.missingComponents.map((component) => component.id)).toEqual([
+      "federal_debt_burden",
+    ]);
+
+    const conflicting = buildDollarDashboardFromSeries([
+      { ...series[0], latest: { ...series[0].latest, value: series[0].latest.value + 1 } },
+      series[1],
+      series[2],
+    ]);
+    expect(conflicting.stress.score).toBeNull();
+    expect(conflicting.stress.sensitivity).toEqual([]);
+    expect(conflicting.stress.missingComponents.map((component) => component.id)).toEqual([
+      "monetary_expansion",
+    ]);
+
     expect(() => buildDollarDashboardFromSeries([series[0], series[0], series[2]])).toThrow(
       "duplicate metrics",
     );
@@ -69,8 +90,16 @@ describe("dollar dashboard route", () => {
   it("renders source, freshness, snapshot, methodology, and chart qualifications", () => {
     const html = renderToStaticMarkup(<DollarDashboardPage />);
     expect(html).toContain("Verified snapshot");
-    expect(html).toContain("Score withheld");
-    expect(html).toContain("usd-stress-experimental-0.1.0");
+    expect(html).toContain("43.5 / 100");
+    expect(html).toContain("usd-stress-v1.0.0");
+    expect(html).toContain("Weight sensitivity");
+    expect(html).toContain("Clipped at the approved p95 ceiling");
+    expect(html).toContain("Current observation");
+    expect(html).toContain("23,218 billions USD · SA");
+    expect(html).toContain("22,025.5 billions USD · SA");
+    expect(html).toContain("Prior-year observation");
+    expect(html).toContain("Source updated");
+    expect(html).toContain("Accessed");
     expect(html).toContain("source updated");
     expect(html).toContain("freshness at snapshot retrieval: current");
     expect(html).toContain("relative change from");

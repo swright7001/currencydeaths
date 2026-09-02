@@ -202,6 +202,49 @@
   text-transform: uppercase;
 }
 
+.dollar-stress-sensitivity {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.dollar-stress-sensitivity h3,
+.dollar-stress-sensitivity p {
+  margin: 0;
+}
+
+.dollar-stress-sensitivity h3 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dollar-stress-sensitivity > p {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+}
+
+.dollar-stress-sensitivity dl {
+  margin: var(--space-4) 0 0;
+}
+
+.dollar-stress-sensitivity dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.65rem;
+}
+
+.dollar-stress-sensitivity dd {
+  margin: 0;
+  color: var(--color-signal-bright);
+}
+
 .dollar-stress-components {
   margin: 0;
   padding: 0;
@@ -2365,41 +2408,88 @@ summary {
   text-transform: uppercase;
 }
 
-.death-clock__display {
+.death-clock__index {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: clamp(2.1rem, 4vw, 3.75rem) clamp(1.25rem, 3vw, 2.5rem);
-}
-
-.death-clock__display > div {
-  display: grid;
-  min-width: 0;
   place-items: center;
-  gap: var(--space-2);
-  border-right: 1px solid rgb(228 56 34 / 24%);
+  gap: var(--space-3);
+  padding: clamp(2rem, 4vw, 3.5rem) clamp(1.25rem, 3vw, 2.5rem) var(--space-6);
+  text-align: center;
 }
 
-.death-clock__display > div:last-child {
-  border-right: 0;
+.death-clock__index > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-3);
 }
 
-.death-clock__value {
+.death-clock__index-value {
   color: #ff5a35;
-  font-size: clamp(2.4rem, 5vw, 4.8rem);
-  font-weight: 450;
-  letter-spacing: -0.08em;
-  line-height: 0.9;
-  text-shadow: 0 0 0.5rem rgb(255 74 45 / 75%), 0 0 1.8rem rgb(228 56 34 / 36%);
+  font-size: clamp(4.7rem, 10vw, 9rem);
+  font-weight: 500;
+  letter-spacing: -0.09em;
+  line-height: 0.78;
+  text-shadow: 0 0 0.7rem rgb(255 74 45 / 72%), 0 0 2.6rem rgb(228 56 34 / 34%);
 }
 
-.death-clock__unit {
+.death-clock__index-scale {
+  color: var(--color-text-muted);
+  font-size: clamp(1rem, 2vw, 1.55rem);
+  letter-spacing: -0.04em;
+}
+
+.death-clock__index > strong {
+  color: var(--color-signal-bright);
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.death-clock__components {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0 clamp(1.25rem, 3vw, 2.5rem) var(--space-6);
+  list-style: none;
+}
+
+.death-clock__components li {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid rgb(228 56 34 / 18%);
+  background: rgb(0 0 0 / 22%);
+}
+
+.death-clock__components span {
   color: var(--color-text-muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: clamp(0.5rem, 0.8vw, 0.62rem);
-  letter-spacing: 0.1em;
+  font-size: 0.52rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
+}
+
+.death-clock__components strong {
+  color: var(--color-text-primary);
+  font-size: 0.72rem;
+}
+
+.death-clock__components i {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  max-width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-signal), var(--color-burnt-orange));
+  box-shadow: 0 0 1rem rgb(228 56 34 / 50%);
 }
 
 .death-clock__footer {
@@ -3306,26 +3396,17 @@ summary {
     padding: var(--space-4);
   }
 
-  .death-clock__display {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: var(--space-6) var(--space-4);
+  .death-clock__index {
+    padding: var(--space-8) var(--space-4) var(--space-6);
   }
 
-  .death-clock__display > div {
-    min-height: 5.6rem;
-    border-right: 0;
+  .death-clock__index-value {
+    font-size: clamp(4.5rem, 23vw, 6.6rem);
   }
 
-  .death-clock__display > div:nth-child(odd) {
-    border-right: 1px solid rgb(228 56 34 / 24%);
-  }
-
-  .death-clock__display > div:nth-child(-n + 2) {
-    border-bottom: 1px solid rgb(228 56 34 / 24%);
-  }
-
-  .death-clock__value {
-    font-size: clamp(2.8rem, 17vw, 4rem);
+  .death-clock__components {
+    grid-template-columns: 1fr;
+    padding-inline: var(--space-4);
   }
 
   .homepage-section-heading {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DeathClock } from "../components/home/death-clock";
+import { DollarStressIndex } from "../components/home/death-clock";
 import { EmailSignup } from "../components/home/email-signup";
 import { CurrencyRecordCard } from "../components/home/currency-record-card";
 import {
@@ -70,8 +70,11 @@ export function Homepage({
             </div>
           </div>
 
-          <DeathClock
-            units={dashboard.clock.units}
+          <DollarStressIndex
+            score={dashboard.stress.value}
+            band={dashboard.stress.band}
+            methodologyVersion={dashboard.stress.methodologyVersion}
+            contributions={dashboard.stress.contributions}
           />
         </div>
       </section>
@@ -216,9 +219,9 @@ export function Homepage({
             <h2>The model should invite scrutiny.</h2>
           </div>
           <p>
-            The initial experimental methodology exposes {dashboard.stress.componentCount} inputs, their sources,
-            normalization ranges, weights, version, and missing-data policy. It remains
-            unapproved for production labeling, and the dramatic clock stays static.
+            Methodology {dashboard.stress.methodologyVersion} exposes {dashboard.stress.componentCount} inputs,
+            their frozen historical anchors, equal weights, sensitivity, and fail-closed
+            missing-data policy. The hero is an index—not a countdown to dollar failure.
           </p>
           <Link href="/methodology/dollar-stress-score">Review experimental methodology →</Link>
         </div>

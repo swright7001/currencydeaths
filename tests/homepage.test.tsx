@@ -5,14 +5,14 @@ import Home, { Homepage } from "../app/page";
 describe("cinematic homepage shell", () => {
   const html = renderToStaticMarkup(<Homepage />);
 
-  it("frames the model as an inert educational fixture", () => {
+  it("frames the approved method as an experimental index rather than a countdown", () => {
     expect(html).toContain("Experimental Dollar Stress Model");
-    expect(html).toContain("This interval does not run and is not a forecast");
-    expect(html).toContain("Development fixture");
-    expect(html).toContain("required methodology inputs are unavailable");
-    expect(html).not.toContain(">68<");
+    expect(html).toContain("43.5");
+    expect(html).toContain("Elevated selected stress");
+    expect(html).toContain("usd-stress-v1.0.0");
+    expect(html).toContain("Not a probability");
     expect(html).not.toContain("probability of failure");
-    expect(html).not.toContain("death date");
+    expect(html).not.toContain("time to failure");
   });
 
   it("distinguishes sourced seed data from withheld research", () => {

@@ -1,5 +1,13 @@
-import { calculateDollarStressScore } from "../calculations/dollar-stress-score";
-import { experimentalDollarStressMethodology } from "../methodology/dollar-stress-score";
+import {
+  calculateDollarStressScore,
+  calculateDollarStressSensitivity,
+  type DollarStressContribution,
+  type DollarStressInput,
+} from "../calculations/dollar-stress-score";
+import {
+  dollarStressMethodologyV1,
+  getDollarStressBand,
+} from "../methodology/dollar-stress-score";
 import {
   calculateDollarMetricFreshness,
   dollarMetricKeys,
@@ -10,6 +18,10 @@ import {
   assertDollarMetricSnapshotIntegrity,
   dollarMetricSnapshot,
 } from "./dollar-metric-snapshot";
+import {
+  buildVerifiedDollarStressInputs,
+  dollarStressBaseline,
+} from "./dollar-stress-baseline";
 import type {
   DollarMetricQueryObservation,
   DollarMetricSeriesContract,
@@ -48,9 +60,31 @@ export type DollarDashboardModel = Readonly<{
   freshnessAsOf: number;
   metrics: readonly DollarDashboardMetric[];
   stress: Readonly<{
-    status: "unavailable" | "provisional_stale" | "experimental";
+    status: "unavailable" | "experimental";
     score: number | null;
+    band: string | null;
     methodologyVersion: string;
+    baselineVersion: string;
+    contributions: readonly Readonly<{
+      id: string;
+      label: string;
+      inputLabel: string;
+      rawValue: number;
+      normalizedScore: number;
+      weight: number;
+      pointContribution: number;
+      freshness: "current" | "stale";
+      observationDate: string;
+      sourceUpdatedAt: number;
+      accessedAt: number;
+      sourceSeriesId: string;
+      sourceUrl: string;
+      lowerAnchor: number;
+      upperAnchor: number;
+      saturated: boolean;
+      derivation: DollarStressContribution["derivation"];
+    }>[];
+    sensitivity: readonly Readonly<{ id: string; label: string; score: number }>[];
     missingComponents: readonly Readonly<{
       id: string;
       label: string;
@@ -107,6 +141,52 @@ function buildTrend(observations: readonly DollarMetricQueryObservation[]) {
     value: `${change > 0 ? "+" : ""}${change.toFixed(2)}%`,
     context: `relative change from ${formatHistoricalMonth(previous.observationDate)}`,
   };
+}
+
+const stressMetricByComponent = {
+  monetary_expansion: "m2",
+  consumer_price_inflation: "cpi",
+  federal_debt_burden: "federal_debt_to_gdp",
+} as const satisfies Record<DollarStressInput["componentId"], DollarMetricKey>;
+
+function historicalMonthToIso(date: HistoricalDate) {
+  if (date.precision !== "month" || date.month === undefined) {
+    throw new Error("Dollar stress inputs require month-precision observations.");
+  }
+  return `${String(date.year).padStart(4, "0")}-${String(date.month).padStart(2, "0")}-01`;
+}
+
+function stressInputMatchesSeries(
+  input: DollarStressInput,
+  series: DollarMetricSeriesContract | undefined,
+) {
+  if (series === undefined) return false;
+  const latest = series.latest;
+  const expected =
+    input.input.kind === "direct"
+      ? {
+          value: input.input.value,
+          observationDate: input.input.observationDate,
+          sourceUpdatedAt: input.input.sourceUpdatedAt,
+          accessedAt: input.input.accessedAt,
+          sourceUnit: input.input.sourceUnit,
+        }
+      : {
+          value: input.input.current.value,
+          observationDate: input.input.current.observationDate,
+          sourceUpdatedAt: input.input.current.sourceUpdatedAt,
+          accessedAt: input.input.current.accessedAt,
+          sourceUnit: input.input.sourceUnit,
+        };
+  return (
+    latest.sourceSeriesId === input.sourceSeriesId &&
+    historicalMonthToIso(latest.observationDate) === expected.observationDate &&
+    latest.value === expected.value &&
+    latest.unit === expected.sourceUnit &&
+    latest.sourceUpdatedAt === expected.sourceUpdatedAt &&
+    latest.source.accessedAt === expected.accessedAt &&
+    latest.recordState === "verified"
+  );
 }
 
 export function buildSnapshotDollarMetricSeries(
@@ -168,22 +248,20 @@ export function buildSnapshotDollarMetricSeries(
 export function buildDollarDashboardFromSeries(
   seriesResults: readonly DollarMetricSeriesContract[],
 ): DollarDashboardModel {
-  if (seriesResults.length !== dollarMetricKeys.length) {
-    throw new Error("Dollar dashboard requires the exact approved query result set.");
-  }
   const resultByMetric = new Map(seriesResults.map((series) => [series.metric, series]));
-  if (resultByMetric.size !== dollarMetricKeys.length) {
+  if (resultByMetric.size !== seriesResults.length) {
     throw new Error("Dollar dashboard query results contain duplicate metrics.");
   }
-  const freshnessAsOf = seriesResults[0].freshness.asOf;
+  const freshnessAsOf =
+    seriesResults[0]?.freshness.asOf ?? dollarMetricSnapshot.retrievedAt;
   if (seriesResults.some((series) => series.freshness.asOf !== freshnessAsOf)) {
     throw new Error("Dollar dashboard query results require one freshness as-of time.");
   }
-  const metrics = dollarMetricKeys.map((key): DollarDashboardMetric => {
+  const metrics = dollarMetricKeys.flatMap((key): DollarDashboardMetric[] => {
     const series = resultByMetric.get(key);
-    if (series === undefined) throw new Error(`Dollar dashboard query result is missing ${key}.`);
+    if (series === undefined) return [];
     const trend = buildTrend(series.directionWindow);
-    return {
+    return [{
       key,
       label: metricLabels[key],
       displayValue: formatMetricValue(key, series.latest.value),
@@ -195,15 +273,22 @@ export function buildDollarDashboardFromSeries(
       observations: series.contextSeries,
       source: series.latest.source,
       freshness: series.freshness,
-    };
+    }];
   });
 
+  const candidateStressInputs = buildVerifiedDollarStressInputs(freshnessAsOf);
+  const boundStressInputs = candidateStressInputs.filter((input) =>
+    stressInputMatchesSeries(
+      input,
+      resultByMetric.get(stressMetricByComponent[input.componentId]),
+    ),
+  );
   const stressResult = calculateDollarStressScore(
-    experimentalDollarStressMethodology,
-    [],
+    dollarStressMethodologyV1,
+    boundStressInputs,
   );
   const componentById = new Map(
-    experimentalDollarStressMethodology.components.map((component) => [component.id, component]),
+    dollarStressMethodologyV1.components.map((component) => [component.id, component]),
   );
 
   return {
@@ -217,7 +302,41 @@ export function buildDollarDashboardFromSeries(
     stress: {
       status: stressResult.status,
       score: stressResult.score,
+      band:
+        stressResult.score === null
+          ? null
+          : getDollarStressBand(stressResult.score, dollarStressMethodologyV1).label,
       methodologyVersion: stressResult.methodologyVersion,
+      baselineVersion: dollarStressBaseline.version,
+      contributions: stressResult.contributions.map((contribution) => {
+        const component = componentById.get(contribution.componentId)!;
+        return {
+          id: contribution.componentId,
+          label: component.label,
+          inputLabel: component.inputLabel,
+          rawValue: contribution.rawValue,
+          normalizedScore: contribution.normalizedScore,
+          weight: contribution.weight,
+          pointContribution: contribution.pointContribution,
+          freshness: contribution.freshness,
+          observationDate: contribution.observationDate,
+          sourceUpdatedAt: contribution.sourceUpdatedAt,
+          accessedAt: contribution.accessedAt,
+          sourceSeriesId: contribution.sourceSeriesId,
+          sourceUrl: component.sourceUrl,
+          lowerAnchor: component.healthyBoundary,
+          upperAnchor: component.extremeBoundary,
+          saturated: contribution.normalizedScore >= 100,
+          derivation: contribution.derivation,
+        };
+      }),
+      sensitivity:
+        stressResult.score === null
+          ? []
+          : calculateDollarStressSensitivity(
+              dollarStressMethodologyV1,
+              stressResult.contributions,
+            ),
       missingComponents: stressResult.missingComponents.map((id) => {
         const component = componentById.get(id)!;
         return {
@@ -225,9 +344,7 @@ export function buildDollarDashboardFromSeries(
           label: component.label,
           weight: component.weight,
           reason:
-            component.inputKind === "year_over_year_percent_change"
-              ? "Prior-year observation is absent from the verified snapshot."
-              : "Exact-day provenance is not represented by the month-precision snapshot.",
+            "The latest expected source period is missing or invalid; the full score is withheld.",
         };
       }),
     },

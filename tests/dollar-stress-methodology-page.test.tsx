@@ -12,13 +12,13 @@ describe("dollar stress methodology route", () => {
 
   it("renders formula, provenance, version, policies, and limitations", () => {
     const html = renderToStaticMarkup(<DollarStressScoreMethodologyPage />);
-    expect(html).toContain("Not production approved");
-    expect(html).toContain("usd-stress-experimental-0.1.0");
+    expect(html).toContain("Approved experimental method");
+    expect(html).toContain("usd-stress-v1.0.0");
     expect(html).toContain("Normalize. Weight. Add.");
     expect(html).toContain("same month prior year");
-    expect(html).toContain("source-update and access timestamps");
+    expect(html).toContain("source-update, access, dataset, and method versions");
     expect(html).toContain("Withhold the score.");
-    expect(html).toContain("Calculate, then flag.");
+    expect(html).toContain("Index, not countdown.");
     expect(html).toContain("FRED M2SL source");
     expect(html).toContain("What the score cannot tell you");
     expect(html).not.toContain("probability of failure");

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { experimentalDollarStressMethodology } from "../../../lib/methodology/dollar-stress-score";
+import { dollarStressMethodologyV1 } from "../../../lib/methodology/dollar-stress-score";
 
 export const metadata: Metadata = {
   title: "Dollar Stress Score Methodology",
@@ -20,14 +20,14 @@ function formatDerivation(kind: string) {
 }
 
 export default function DollarStressScoreMethodologyPage() {
-  const methodology = experimentalDollarStressMethodology;
+  const methodology = dollarStressMethodologyV1;
 
   return (
     <main id="main-content" className="stress-methodology-page">
       <section className="stress-methodology-hero">
         <div className="shell-container stress-methodology-hero__grid">
           <div>
-            <p className="section-kicker">Model file / experimental / challengeable</p>
+            <p className="section-kicker">Model file / owner approved / challengeable</p>
             <h1>Dollar Stress Score</h1>
             <p>
               A transparent index of selected historical stress signals—not a
@@ -35,12 +35,13 @@ export default function DollarStressScoreMethodologyPage() {
             </p>
           </div>
           <aside aria-label="Methodology release status">
-            <span>Not production approved</span>
+            <span>Approved experimental method</span>
             <dl>
               <div><dt>Version</dt><dd>{methodology.version}</dd></div>
               <div><dt>Methodology as of</dt><dd>{methodology.asOf}</dd></div>
               <div><dt>Output</dt><dd>0–100 stress index</dd></div>
               <div><dt>Precision</dt><dd>1 decimal place</dd></div>
+              <div><dt>Baseline</dt><dd>1966–2025 frozen</dd></div>
             </dl>
           </aside>
         </div>
@@ -55,13 +56,16 @@ export default function DollarStressScoreMethodologyPage() {
           SCORE = Σ ( NORMALIZED COMPONENT × WEIGHT )
         </p>
         <p>
-          Each input is mapped linearly between a disclosed lower and upper
-          boundary, then clamped to 0–100. Its normalized value is multiplied by
-          the listed weight. The final sum is rounded once to one decimal place.
+          Sort each finite transformed baseline sample and calculate p20 and p95
+          using R-7 linear interpolation: h=(n−1)p, interpolating between floor(h)
+          and ceil(h). Map the current input linearly between those anchors and
+          clamp it to 0–100.
         </p>
         <p>
-          Derived rates retain both raw observations, their observation dates, and
-          their source-update and access timestamps so the calculation can be audited.
+          Each component has an exact one-third weight. Source values, derived rates,
+          anchors, normalized values, and contributions remain unrounded; only the
+          final composite is rounded to one decimal. Every result retains both raw
+          observations and its source-update, access, dataset, and method versions.
         </p>
       </section>
 
@@ -71,7 +75,7 @@ export default function DollarStressScoreMethodologyPage() {
             <p className="section-kicker">Three inputs / 100% disclosed</p>
             <h2 id="components-title">Component register</h2>
           </div>
-          <p>These ranges are research assumptions, not universal danger thresholds.</p>
+          <p>Frozen empirical percentile anchors; equal weights are a disclosed policy choice.</p>
         </header>
         <div className="stress-component-grid">
           {methodology.components.map((component, index) => (
@@ -82,11 +86,12 @@ export default function DollarStressScoreMethodologyPage() {
               <p>{component.label}</p>
               <h3>{component.inputLabel}</h3>
               <dl>
-                <div><dt>Weight</dt><dd className="metric-numerals">{component.weight * 100}%</dd></div>
+                <div><dt>Weight</dt><dd className="metric-numerals">33⅓%</dd></div>
                 <div><dt>Input derivation</dt><dd>{formatDerivation(component.inputKind)}</dd></div>
-                <div><dt>0-point boundary</dt><dd className="metric-numerals">{component.healthyBoundary} {formatUnit(component.outputUnit)}</dd></div>
-                <div><dt>100-point boundary</dt><dd className="metric-numerals">{component.extremeBoundary} {formatUnit(component.outputUnit)}</dd></div>
+                <div><dt>p20 / 0 points</dt><dd className="metric-numerals">{component.healthyBoundary.toFixed(3)} {formatUnit(component.outputUnit)}</dd></div>
+                <div><dt>p95 / 100 points</dt><dd className="metric-numerals">{component.extremeBoundary.toFixed(3)} {formatUnit(component.outputUnit)}</dd></div>
                 <div><dt>Transform</dt><dd>Linear, clamped</dd></div>
+                <div><dt>Stale after</dt><dd>{component.freshnessDays} days</dd></div>
               </dl>
               <p>{component.rationale}</p>
               <a href={component.sourceUrl} rel="noreferrer">
@@ -113,10 +118,55 @@ export default function DollarStressScoreMethodologyPage() {
           </article>
           <article>
             <span>Stale input</span>
-            <h3>Calculate, then flag.</h3>
+            <h3>Withhold the score.</h3>
             <p>
-              A stale observation keeps its measured value and contribution, while
-              the entire result becomes provisional and names every stale component.
+              Both the source-update age and observation period-end age must pass
+              the approved 75-day monthly or 180-day quarterly window. Any stale
+              component suppresses the entire composite.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="shell-container stress-methodology-section" aria-labelledby="bands-title">
+        <header>
+          <div>
+            <p className="section-kicker">Display policy / not probabilities</p>
+            <h2 id="bands-title">Descriptive bands</h2>
+          </div>
+          <p>Equal-width labels improve readability; they are not calibrated crisis thresholds.</p>
+        </header>
+        <div className="stress-component-grid">
+          {methodology.bands.map((band) => (
+            <article key={band.label}>
+              <p>{band.minimum.toFixed(1)}—{band.maximum.toFixed(1)}</p>
+              <h3>{band.label} selected stress</h3>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="stress-methodology-policy" aria-labelledby="clock-policy-title">
+        <div className="shell-container stress-methodology-policy__grid">
+          <div>
+            <p className="section-kicker">Hero semantics / no invented time</p>
+            <h2 id="clock-policy-title">Index, not countdown.</h2>
+          </div>
+          <article>
+            <span>Approved decision</span>
+            <h3>No time-to-failure clock.</h3>
+            <p>
+              No v1 input maps stress to a defensible date. The hero displays the
+              index and component contributions while “Countdown to Zero” remains
+              visual direction only.
+            </p>
+          </article>
+          <article>
+            <span>Future boundary</span>
+            <h3>Time requires a new method.</h3>
+            <p>
+              Any future countdown needs a separately sourced, validated, versioned,
+              independently reviewed, and owner-approved measurable quantity.
             </p>
           </article>
         </div>
@@ -147,7 +197,7 @@ export default function DollarStressScoreMethodologyPage() {
             <p>{entry.summary}</p>
           </article>
         ))}
-        <Link href="/">← Return to countdown</Link>
+        <Link href="/">← Return to the index</Link>
       </section>
     </main>
   );
