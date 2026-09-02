@@ -36,7 +36,7 @@ const sourceOutputValidator = v.object({
 });
 
 const observationOutputValidator = v.object({
-  id: v.id("dollarMetrics"),
+  id: v.string(),
   metric: dollarMetricKeyValidator,
   observationDate: historicalDateValidator,
   value: v.number(),
@@ -53,6 +53,8 @@ const observationOutputValidator = v.object({
 const seriesResultValidator = v.union(
   v.null(),
   v.object({
+    datasetVersion: v.string(),
+    retrievedAt: v.number(),
     metric: dollarMetricKeyValidator,
     latest: observationOutputValidator,
     directionWindow: v.array(observationOutputValidator),
@@ -189,6 +191,39 @@ async function resolveObservation(
   };
 }
 
+async function resolveRefreshObservation(
+  ctx: QueryCtx,
+  observation: Doc<"dollarMetricRevisions">,
+) {
+  if (observation.value === null) {
+    throw new ConvexError("Missing refresh observations cannot be rendered as numeric values.");
+  }
+  const source = await ctx.db.get(observation.sourceId);
+  if (source === null) throw new ConvexError("Dollar metric refresh source reference is invalid.");
+  return {
+    id: observation._id,
+    metric: observation.metric,
+    observationDate: observation.observationDate,
+    value: observation.value,
+    unit: observation.unit,
+    frequency: observation.frequency,
+    sourceSeriesId: observation.sourceSeriesId,
+    sourceUpdatedAt: observation.sourceUpdatedAt,
+    fixtureBatchVersion: null,
+    notes: null,
+    recordState: "verified" as const,
+    source: {
+      id: source._id,
+      title: source.title,
+      publisher: source.publisher,
+      url: source.url,
+      publicationDate: source.publicationDate ?? null,
+      accessedAt: observation.retrievedAt,
+      sourceType: source.sourceType,
+    },
+  };
+}
+
 export const getSeries = query({
   args: {
     metric: dollarMetricKeyValidator,
@@ -201,6 +236,53 @@ export const getSeries = query({
     const directionWindowSize = requireLimit(args.directionWindowSize, 3, 24);
     const contextLimit = requireLimit(args.contextLimit, 60, 120);
     const takeLimit = Math.max(directionWindowSize, contextLimit);
+    const active = await ctx.db
+      .query("dollarMetricActiveDatasets")
+      .withIndex("by_key", (q) => q.eq("key", "official_usd_v1"))
+      .unique();
+    if (active !== null) {
+      const batch = await ctx.db.get(active.activeBatchId);
+      if (batch === null) throw new ConvexError("Active dollar metric refresh batch is missing.");
+      const descendingWithMissing = await ctx.db
+        .query("dollarMetricRevisions")
+        .withIndex("by_batch_id_and_metric_and_observation_date_key", (q) =>
+          q.eq("batchId", batch._id).eq("metric", args.metric),
+        )
+        .order("desc")
+        .take(120);
+      const descending = descendingWithMissing.filter(
+        (observation): observation is typeof observation & { value: number } =>
+          observation.value !== null,
+      );
+      const latest = descending[0];
+      if (latest === undefined) {
+        throw new ConvexError(`Active dollar metric refresh series has no finite value: ${args.metric}.`);
+      }
+      let freshness;
+      try {
+        freshness = calculateDollarMetricFreshness(args.metric, latest.sourceUpdatedAt, args.asOf);
+      } catch (error) {
+        throw new ConvexError(error instanceof Error ? error.message : "Invalid freshness input.");
+      }
+      const contextDocuments = descending.slice(0, contextLimit).reverse();
+      const directionDocuments = descending.slice(0, directionWindowSize).reverse();
+      const [latestOutput, directionWindow, contextSeries] = await Promise.all([
+        resolveRefreshObservation(ctx, latest),
+        Promise.all(directionDocuments.map((item) => resolveRefreshObservation(ctx, item))),
+        Promise.all(contextDocuments.map((item) => resolveRefreshObservation(ctx, item))),
+      ]);
+      return {
+        datasetVersion: batch.batchKey,
+        retrievedAt: batch.retrievedAt,
+        metric: args.metric,
+        latest: latestOutput,
+        directionWindow,
+        contextSeries,
+        gaps: findDollarMetricGaps(contextDocuments, latest.frequency),
+        freshness,
+        developmentNotice: null,
+      } satisfies DollarMetricSeriesContract;
+    }
     const descending = await ctx.db
       .query("dollarMetrics")
       .withIndex("by_metric_and_observation_date_key", (q) => q.eq("metric", args.metric))
@@ -229,6 +311,8 @@ export const getSeries = query({
     ]);
 
     return {
+      datasetVersion: dollarMetricSnapshot.version,
+      retrievedAt: dollarMetricSnapshot.retrievedAt,
       metric: args.metric,
       latest: latestOutput,
       directionWindow,

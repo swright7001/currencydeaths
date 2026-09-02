@@ -2,7 +2,11 @@ import {
   createCurrencyArchiveRecords,
   displayArchiveLabel,
 } from "./currency-archive";
-import { buildSnapshotDollarDashboard, formatUtcDate } from "./dollar-dashboard";
+import {
+  buildSnapshotDollarDashboard,
+  formatUtcDate,
+  type DollarDashboardModel,
+} from "./dollar-dashboard";
 import {
   buildLifespanResearch,
   createLifespanResearchRecords,
@@ -54,8 +58,8 @@ export function buildHomepageDashboard(
   deliveryState: HomepageDeliveryState = "ready",
   dataset: VerifiedCurrencyDataset = verifiedCurrencySeed,
   researchSource: ResearchDeliverySource = "repository",
+  dollar: DollarDashboardModel = buildSnapshotDollarDashboard(),
 ) {
-  const dollar = buildSnapshotDollarDashboard();
   const currencyArchiveRecords = createCurrencyArchiveRecords(dataset);
   const lifespan = buildLifespanResearch(
     createLifespanResearchRecords(currencyArchiveRecords),

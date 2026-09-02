@@ -32,6 +32,8 @@ export type DollarMetricQueryObservation = Readonly<{
 }>;
 
 export type DollarMetricSeriesContract = Readonly<{
+  datasetVersion: string;
+  retrievedAt: number;
   metric: DollarMetricKey;
   latest: DollarMetricQueryObservation;
   directionWindow: readonly DollarMetricQueryObservation[];

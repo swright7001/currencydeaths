@@ -56,7 +56,8 @@ export type DollarDashboardMetric = Readonly<{
 
 export type DollarDashboardModel = Readonly<{
   datasetVersion: string;
-  freshnessBasis: "snapshot_retrieval" | "explicit_as_of";
+  retrievedAt: number;
+  freshnessBasis: "snapshot_retrieval" | "provider_retrieval" | "explicit_as_of";
   freshnessAsOf: number;
   metrics: readonly DollarDashboardMetric[];
   stress: Readonly<{
@@ -156,36 +157,82 @@ function historicalMonthToIso(date: HistoricalDate) {
   return `${String(date.year).padStart(4, "0")}-${String(date.month).padStart(2, "0")}-01`;
 }
 
-function stressInputMatchesSeries(
+function buildDollarStressInputFromSeries(
+  componentId: DollarStressInput["componentId"],
+  series: DollarMetricSeriesContract | undefined,
+): DollarStressInput | null {
+  if (series === undefined) return null;
+  const component = dollarStressMethodologyV1.components.find((item) => item.id === componentId);
+  if (
+    component === undefined ||
+    series.latest.recordState !== "verified" ||
+    series.latest.sourceSeriesId !== component.sourceSeriesId ||
+    series.latest.unit !== component.sourceUnit
+  ) return null;
+  const currentDate = historicalMonthToIso(series.latest.observationDate);
+  const shared = {
+    componentId,
+    sourceSeriesId: series.latest.sourceSeriesId,
+    freshness: series.freshness.state,
+  } as const;
+  if (component.inputKind === "direct") {
+    return {
+      ...shared,
+      input: {
+        kind: "direct",
+        sourceUnit: "percent_gdp_seasonally_adjusted",
+        value: series.latest.value,
+        observationDate: currentDate,
+        sourceUpdatedAt: series.latest.sourceUpdatedAt,
+        accessedAt: series.latest.source.accessedAt,
+      },
+    };
+  }
+  const priorDate = `${Number(currentDate.slice(0, 4)) - 1}${currentDate.slice(4)}`;
+  const prior = series.contextSeries.find(
+    (observation) => historicalMonthToIso(observation.observationDate) === priorDate,
+  );
+  if (
+    prior === undefined ||
+    prior.recordState !== "verified" ||
+    prior.sourceSeriesId !== component.sourceSeriesId ||
+    prior.unit !== component.sourceUnit
+  ) return null;
+  return {
+    ...shared,
+    input: {
+      kind: "year_over_year_percent_change",
+      sourceUnit: component.sourceUnit,
+      current: {
+        value: series.latest.value,
+        observationDate: currentDate,
+        sourceUpdatedAt: series.latest.sourceUpdatedAt,
+        accessedAt: series.latest.source.accessedAt,
+      },
+      priorYear: {
+        value: prior.value,
+        observationDate: priorDate,
+        sourceUpdatedAt: prior.sourceUpdatedAt,
+        accessedAt: prior.source.accessedAt,
+      },
+    },
+  };
+}
+
+function snapshotStressInputMatchesSeries(
   input: DollarStressInput,
   series: DollarMetricSeriesContract | undefined,
 ) {
   if (series === undefined) return false;
-  const latest = series.latest;
-  const expected =
-    input.input.kind === "direct"
-      ? {
-          value: input.input.value,
-          observationDate: input.input.observationDate,
-          sourceUpdatedAt: input.input.sourceUpdatedAt,
-          accessedAt: input.input.accessedAt,
-          sourceUnit: input.input.sourceUnit,
-        }
-      : {
-          value: input.input.current.value,
-          observationDate: input.input.current.observationDate,
-          sourceUpdatedAt: input.input.current.sourceUpdatedAt,
-          accessedAt: input.input.current.accessedAt,
-          sourceUnit: input.input.sourceUnit,
-        };
+  const expected = input.input.kind === "direct" ? input.input : input.input.current;
   return (
-    latest.sourceSeriesId === input.sourceSeriesId &&
-    historicalMonthToIso(latest.observationDate) === expected.observationDate &&
-    latest.value === expected.value &&
-    latest.unit === expected.sourceUnit &&
-    latest.sourceUpdatedAt === expected.sourceUpdatedAt &&
-    latest.source.accessedAt === expected.accessedAt &&
-    latest.recordState === "verified"
+    series.latest.sourceSeriesId === input.sourceSeriesId &&
+    historicalMonthToIso(series.latest.observationDate) === expected.observationDate &&
+    series.latest.value === expected.value &&
+    series.latest.unit === input.input.sourceUnit &&
+    series.latest.sourceUpdatedAt === expected.sourceUpdatedAt &&
+    series.latest.source.accessedAt === expected.accessedAt &&
+    series.latest.recordState === "verified"
   );
 }
 
@@ -234,6 +281,8 @@ export function buildSnapshotDollarMetricSeries(
     const latest = contextSeries[contextSeries.length - 1];
     if (latest === undefined) throw new Error(`Snapshot query series missing: ${metric}.`);
     return {
+      datasetVersion: dollarMetricSnapshot.version,
+      retrievedAt: dollarMetricSnapshot.retrievedAt,
       metric,
       latest,
       directionWindow: contextSeries.slice(-3),
@@ -247,6 +296,7 @@ export function buildSnapshotDollarMetricSeries(
 
 export function buildDollarDashboardFromSeries(
   seriesResults: readonly DollarMetricSeriesContract[],
+  metadata: Readonly<{ datasetVersion?: string; retrievedAt?: number }> = {},
 ): DollarDashboardModel {
   const resultByMetric = new Map(seriesResults.map((series) => [series.metric, series]));
   if (resultByMetric.size !== seriesResults.length) {
@@ -276,13 +326,20 @@ export function buildDollarDashboardFromSeries(
     }];
   });
 
-  const candidateStressInputs = buildVerifiedDollarStressInputs(freshnessAsOf);
-  const boundStressInputs = candidateStressInputs.filter((input) =>
-    stressInputMatchesSeries(
-      input,
-      resultByMetric.get(stressMetricByComponent[input.componentId]),
-    ),
-  );
+  const boundStressInputs = metadata.retrievedAt === undefined
+    ? buildVerifiedDollarStressInputs(freshnessAsOf).filter((input) =>
+        snapshotStressInputMatchesSeries(
+          input,
+          resultByMetric.get(stressMetricByComponent[input.componentId]),
+        ),
+      )
+    : dollarStressMethodologyV1.components.flatMap((component) => {
+        const input = buildDollarStressInputFromSeries(
+          component.id,
+          resultByMetric.get(stressMetricByComponent[component.id]),
+        );
+        return input === null ? [] : [input];
+      });
   const stressResult = calculateDollarStressScore(
     dollarStressMethodologyV1,
     boundStressInputs,
@@ -292,11 +349,14 @@ export function buildDollarDashboardFromSeries(
   );
 
   return {
-    datasetVersion: dollarMetricSnapshot.version,
+    datasetVersion: metadata.datasetVersion ?? dollarMetricSnapshot.version,
+    retrievedAt: metadata.retrievedAt ?? dollarMetricSnapshot.retrievedAt,
     freshnessBasis:
-      freshnessAsOf === dollarMetricSnapshot.retrievedAt
-        ? "snapshot_retrieval"
-        : "explicit_as_of",
+      metadata.retrievedAt !== undefined
+        ? "provider_retrieval"
+        : freshnessAsOf === dollarMetricSnapshot.retrievedAt
+          ? "snapshot_retrieval"
+          : "explicit_as_of",
     freshnessAsOf,
     metrics,
     stress: {
