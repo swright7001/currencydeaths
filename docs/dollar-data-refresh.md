@@ -15,6 +15,7 @@ Each run makes one metadata request and one observations request per series. It 
 ## Safety contract
 
 - Validate authentication, HTTP status, JSON content type, response size, series identity, units, frequency, seasonal adjustment, chronology, finite values, source timestamps, and the exact three-series set before mutation.
+- Require the latest observation period and source update to fit the approved stress-method windows: 75 days for monthly M2/CPI and 180 days for quarterly debt/GDP. Observation age is measured from the actual month or quarter end.
 - Preserve `.` FRED values as explicit missing observations. Never coerce them to zero or interpolate them.
 - Hash only source data and metadata for batch identity. Retrieval time remains provenance, so unchanged source responses do not create a new batch.
 - Write a complete immutable revision batch and move the active pointer in one Convex transaction. A failed or partial batch never becomes readable.

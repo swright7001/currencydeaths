@@ -13,10 +13,13 @@ function refreshSeries(offset = 0) {
   return fredRefreshSeriesContracts.map((contract) => {
     const quarterly = contract.metric === "federal_debt_to_gdp";
     const observations = quarterly
-      ? [1, 4, 7, 10].map((month, index) => ({
+      ? [4, 7, 10].map((month, index) => ({
           date: `2025-${String(month).padStart(2, "0")}-01`,
           value: 100 + index + offset,
-        })).concat([{ date: "2026-01-01", value: 104 + offset }])
+        })).concat([
+          { date: "2026-01-01", value: 103 + offset },
+          { date: "2026-04-01", value: 104 + offset },
+        ])
       : Array.from({ length: 13 }, (_, index) => {
           const ordinal = 2025 * 12 + 6 + index;
           const year = Math.floor(ordinal / 12);
@@ -41,6 +44,26 @@ function refreshSeries(offset = 0) {
 }
 
 describe("dollar metric refresh persistence", () => {
+  it("fails a credential-free dry run without writing operational state", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.action(internal.dollarMetricRefresh.run, { mode: "dry_run" }),
+    ).rejects.toThrow("fred_api_key_unavailable");
+    expect(await t.run((ctx) => ctx.db.query("dollarMetricRefreshRuns").collect())).toEqual([]);
+    expect(await t.run((ctx) => ctx.db.query("dollarMetricRefreshBatches").collect())).toEqual([]);
+    await expect(
+      t.action(internal.dollarMetricRefresh.run, { mode: "manual" }),
+    ).rejects.toThrow("fred_api_key_unavailable");
+    const runs = await t.run((ctx) => ctx.db.query("dollarMetricRefreshRuns").collect());
+    expect(runs).toHaveLength(1);
+    expect(runs[0]).toMatchObject({
+      mode: "manual",
+      outcome: "failed",
+      errorCode: "fred_api_key_unavailable",
+    });
+    expect(JSON.stringify(runs[0])).not.toContain("api_key=");
+  });
+
   it("activates atomically, is idempotent, exposes provenance, and rolls back", async () => {
     const t = convexTest(schema, modules);
     await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version: snapshotVersion });
@@ -120,5 +143,25 @@ describe("dollar metric refresh persistence", () => {
     expect(
       await t.run(async (ctx) => ctx.db.query("dollarMetricRefreshBatches").collect()),
     ).toEqual([]);
+  });
+
+  it("rejects stale observation periods before writing", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version: snapshotVersion });
+    const digest = "d".repeat(64);
+    const stale = refreshSeries();
+    stale[0].observations = [
+      { date: "2020-01-01", value: 1 },
+      { date: "2020-02-01", value: 2 },
+    ];
+    await expect(
+      t.mutation(internal.dollarMetricRefreshStore.applyValidatedBatch, {
+        batchKey: `fred-refresh-v1:${digest}`,
+        payloadDigest: digest,
+        retrievedAt,
+        series: stale,
+      }),
+    ).rejects.toThrow("latest observation is stale");
+    expect(await t.run((ctx) => ctx.db.query("dollarMetricRevisions").collect())).toEqual([]);
   });
 });

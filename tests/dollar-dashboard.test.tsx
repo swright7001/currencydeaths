@@ -142,7 +142,7 @@ describe("dollar dashboard route", () => {
     expect(html).toContain("relative change from");
     expect(html).toContain("observation values");
     expect(html).toContain("Verified dated snapshot");
-    expect(html).toContain("not long-run evidence");
+    expect(html).toContain("capped at 120 stored observations");
     expect(html).not.toContain("probability of failure");
   });
 });

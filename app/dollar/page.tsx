@@ -188,9 +188,9 @@ export default async function DollarDashboardPage() {
           <header className="dollar-section-heading">
             <div>
               <p className="section-kicker">Short windows / explicit limitation</p>
-              <h2 id="dollar-history-title">Recent verified history</h2>
+              <h2 id="dollar-history-title">Bounded verified history</h2>
             </div>
-            <p>These five-point traces demonstrate the interface; they are not long-run evidence.</p>
+            <p>Each trace is capped at 120 stored observations and remains subject to source revisions.</p>
           </header>
           <div className="dollar-chart-grid">
             {dashboard.metrics.map((metric) => <MetricSeriesChart key={metric.key} metric={metric} />)}

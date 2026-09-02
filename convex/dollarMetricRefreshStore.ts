@@ -5,7 +5,12 @@ import {
   FRED_REFRESH_VERSION,
   fredRefreshSeriesContracts,
 } from "../lib/data/fred-refresh-contract";
-import { dollarMetricDefinitions, dollarMetricKeys } from "../lib/data/dollar-metric-contracts";
+import {
+  calculateDollarMetricObservationAgeDays,
+  dollarMetricDefinitions,
+  dollarMetricKeys,
+} from "../lib/data/dollar-metric-contracts";
+import { dollarStressMethodologyV1 } from "../lib/methodology/dollar-stress-score";
 import { historicalDateToKey } from "../lib/data/historical-date";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
@@ -128,6 +133,31 @@ function validateSeries(args: {
     const latestTimestamp = Date.parse(`${latest.date}T00:00:00Z`);
     if (latestTimestamp > series.sourceUpdatedAt) {
       throw new ConvexError(`Refresh latest observation is after its source update: ${series.metric}.`);
+    }
+    let observationAgeDays;
+    try {
+      observationAgeDays = calculateDollarMetricObservationAgeDays(
+        series.metric,
+        parseObservationDate(latest.date),
+        args.retrievedAt,
+      );
+    } catch (error) {
+      throw new ConvexError(
+        error instanceof Error ? error.message : `Refresh freshness is invalid: ${series.metric}.`,
+      );
+    }
+    const component = dollarStressMethodologyV1.components.find(
+      (item) => item.sourceMetric === series.metric,
+    );
+    const sourceAgeDays = Math.floor(
+      (args.retrievedAt - series.sourceUpdatedAt) / 86_400_000,
+    );
+    if (
+      component === undefined ||
+      sourceAgeDays > component.freshnessDays ||
+      observationAgeDays > component.freshnessDays
+    ) {
+      throw new ConvexError(`Refresh latest observation is stale: ${series.metric}.`);
     }
   }
 }

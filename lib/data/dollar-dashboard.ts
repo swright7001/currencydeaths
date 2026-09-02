@@ -9,6 +9,7 @@ import {
   getDollarStressBand,
 } from "../methodology/dollar-stress-score";
 import {
+  calculateDollarMetricObservationAgeDays,
   calculateDollarMetricFreshness,
   dollarMetricKeys,
   findDollarMetricGaps,
@@ -26,6 +27,7 @@ import type {
   DollarMetricQueryObservation,
   DollarMetricSeriesContract,
 } from "./dollar-metric-query-contract";
+import { FRED_REFRESH_VERSION } from "./fred-refresh-contract";
 import { historicalDateToKey, type HistoricalDate } from "./historical-date";
 
 const metricLabels: Record<DollarMetricKey, string> = {
@@ -170,10 +172,21 @@ function buildDollarStressInputFromSeries(
     series.latest.unit !== component.sourceUnit
   ) return null;
   const currentDate = historicalMonthToIso(series.latest.observationDate);
+  const observationAgeDays = calculateDollarMetricObservationAgeDays(
+    series.metric,
+    series.latest.observationDate,
+    series.freshness.asOf,
+  );
+  const sourceAgeDays = Math.floor(
+    (series.freshness.asOf - series.latest.sourceUpdatedAt) / 86_400_000,
+  );
   const shared = {
     componentId,
     sourceSeriesId: series.latest.sourceSeriesId,
-    freshness: series.freshness.state,
+    freshness:
+      sourceAgeDays <= component.freshnessDays && observationAgeDays <= component.freshnessDays
+        ? ("current" as const)
+        : ("stale" as const),
   } as const;
   if (component.inputKind === "direct") {
     return {
@@ -298,6 +311,7 @@ export function buildDollarDashboardFromSeries(
   seriesResults: readonly DollarMetricSeriesContract[],
   metadata: Readonly<{ datasetVersion?: string; retrievedAt?: number }> = {},
 ): DollarDashboardModel {
+  const providerBacked = metadata.datasetVersion?.startsWith(`${FRED_REFRESH_VERSION}:`) ?? false;
   const resultByMetric = new Map(seriesResults.map((series) => [series.metric, series]));
   if (resultByMetric.size !== seriesResults.length) {
     throw new Error("Dollar dashboard query results contain duplicate metrics.");
@@ -326,7 +340,7 @@ export function buildDollarDashboardFromSeries(
     }];
   });
 
-  const boundStressInputs = metadata.retrievedAt === undefined
+  const boundStressInputs = !providerBacked
     ? buildVerifiedDollarStressInputs(freshnessAsOf).filter((input) =>
         snapshotStressInputMatchesSeries(
           input,
@@ -352,7 +366,7 @@ export function buildDollarDashboardFromSeries(
     datasetVersion: metadata.datasetVersion ?? dollarMetricSnapshot.version,
     retrievedAt: metadata.retrievedAt ?? dollarMetricSnapshot.retrievedAt,
     freshnessBasis:
-      metadata.retrievedAt !== undefined
+      providerBacked
         ? "provider_retrieval"
         : freshnessAsOf === dollarMetricSnapshot.retrievedAt
           ? "snapshot_retrieval"

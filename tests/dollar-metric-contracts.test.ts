@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateDollarMetricObservationAgeDays,
   calculateDollarMetricFreshness,
   findDollarMetricGaps,
   validateDollarMetricObservation,
@@ -76,5 +77,23 @@ describe("dollar metric contracts", () => {
     expect(calculateDollarMetricFreshness("m2", updatedAt, Date.UTC(2026, 9, 1))).toMatchObject({
       state: "stale",
     });
+  });
+
+  it("measures observation freshness from the actual monthly or quarterly period end", () => {
+    expect(calculateDollarMetricObservationAgeDays(
+      "m2",
+      { year: 2026, month: 7, precision: "month" },
+      Date.UTC(2026, 8, 2),
+    )).toBe(32);
+    expect(calculateDollarMetricObservationAgeDays(
+      "federal_debt_to_gdp",
+      { year: 2026, month: 1, precision: "month" },
+      Date.UTC(2026, 8, 2),
+    )).toBe(154);
+    expect(() => calculateDollarMetricObservationAgeDays(
+      "federal_debt_to_gdp",
+      { year: 2026, month: 2, precision: "month" },
+      Date.UTC(2026, 8, 2),
+    )).toThrow("calendar-quarter start");
   });
 });

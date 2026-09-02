@@ -34,14 +34,14 @@ describe("official FRED refresh contract", () => {
       contract,
       metadata(),
       observations([
-        { date: "2026-05-01", value: "." },
-        { date: "2026-06-01", value: "23100.0" },
+        { date: "2026-06-01", value: "." },
+        { date: "2026-07-01", value: "23100.0" },
       ]),
       retrievedAt,
     );
     expect(parsed.observations).toEqual([
-      { date: "2026-05-01", value: null },
-      { date: "2026-06-01", value: 23_100 },
+      { date: "2026-06-01", value: null },
+      { date: "2026-07-01", value: 23_100 },
     ]);
     expect(parsed.sourceUpdatedAt).toBe(Date.parse("2026-08-25 12:00:00-05"));
   });
@@ -81,7 +81,7 @@ describe("official FRED refresh contract", () => {
         observations([{ date: "2026-06-01", value: "1" }, { date: "2026-06-01", value: "2" }]),
         retrievedAt,
       ),
-    ).toThrow("unique and chronological");
+    ).toThrow("unique, chronological, and contiguous");
     expect(() =>
       parseFredSeriesResponses(
         contract,
@@ -90,6 +90,20 @@ describe("official FRED refresh contract", () => {
         retrievedAt,
       ),
     ).toThrow("Latest FRED observation is missing");
+  });
+
+  it("rejects an ancient observation even when metadata was updated recently", () => {
+    expect(() =>
+      parseFredSeriesResponses(
+        contract,
+        metadata(),
+        observations([
+          { date: "2020-01-01", value: "1" },
+          { date: "2020-02-01", value: "2" },
+        ]),
+        retrievedAt,
+      ),
+    ).toThrow("observation is stale");
   });
 
   it("uses only source payload identity, not retrieval time, for idempotency", () => {

@@ -22,6 +22,7 @@ describe("dollar dashboard repository", () => {
       fetcher: async (_url, metric) => byMetric.get(metric) ?? null,
     });
     expect(dashboard.datasetVersion).toBe("fred-refresh-v1:fixture");
+    expect(dashboard.freshnessBasis).toBe("provider_retrieval");
 
     await expect(
       loadDollarDashboard({
@@ -43,5 +44,18 @@ describe("dollar dashboard repository", () => {
         },
       }),
     ).rejects.toThrow("one atomic dataset");
+  });
+
+  it("keeps the verified snapshot scoring path until a provider batch is active", async () => {
+    const asOf = Date.UTC(2026, 8, 2);
+    const fixture = buildSnapshotDollarMetricSeries(asOf);
+    const byMetric = new Map(fixture.map((series) => [series.metric, series]));
+    const dashboard = await loadDollarDashboard({
+      convexUrl: "https://example.convex.cloud",
+      asOf,
+      fetcher: async (_url, metric) => byMetric.get(metric) ?? null,
+    });
+    expect(dashboard.freshnessBasis).toBe("explicit_as_of");
+    expect(dashboard.stress.score).toBe(43.5);
   });
 });

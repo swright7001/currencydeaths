@@ -1,9 +1,11 @@
 import {
+  calculateDollarMetricObservationAgeDays,
   dollarMetricDefinitions,
   type DollarMetricFrequency,
   type DollarMetricKey,
   type DollarMetricUnit,
 } from "./dollar-metric-contracts";
+import { dollarStressMethodologyV1 } from "../methodology/dollar-stress-score";
 
 export const FRED_REFRESH_VERSION = "fred-refresh-v1";
 export const FRED_REFRESH_METHODOLOGY_VERSION = "usd-stress-v1.0.0";
@@ -103,6 +105,12 @@ function parseLastUpdated(value: unknown) {
   return timestamp;
 }
 
+function monthOrdinal(date: string) {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  return year * 12 + month - 1;
+}
+
 export function parseFredSeriesResponses(
   contract: (typeof fredRefreshSeriesContracts)[number],
   metadataPayload: unknown,
@@ -152,15 +160,41 @@ export function parseFredSeriesResponses(
     return { date, value };
   });
   for (let index = 1; index < observations.length; index += 1) {
-    if (observations[index - 1].date >= observations[index].date) {
-      throw new Error(`FRED observations must be unique and chronological for ${contract.sourceSeriesId}.`);
+    const expectedStep = contract.frequencyLabel === "Monthly" ? 1 : 3;
+    if (monthOrdinal(observations[index].date) - monthOrdinal(observations[index - 1].date) !== expectedStep) {
+      throw new Error(`FRED observations must be unique, chronological, and contiguous for ${contract.sourceSeriesId}.`);
     }
   }
-  if (observations.at(-1)?.value === null) {
+  const latest = observations.at(-1)!;
+  if (latest.value === null) {
     throw new Error(`Latest FRED observation is missing for ${contract.sourceSeriesId}.`);
   }
 
   const definition = dollarMetricDefinitions[contract.metric];
+  const latestMonth = Number(latest.date.slice(5, 7));
+  if (definition.frequency === "quarterly" && ![1, 4, 7, 10].includes(latestMonth)) {
+    throw new Error(`Latest FRED quarter is not calendar-aligned for ${contract.sourceSeriesId}.`);
+  }
+  const observationAgeDays = calculateDollarMetricObservationAgeDays(
+    contract.metric,
+    {
+      year: Number(latest.date.slice(0, 4)),
+      month: latestMonth,
+      precision: "month",
+    },
+    retrievedAt,
+  );
+  const component = dollarStressMethodologyV1.components.find(
+    (item) => item.sourceMetric === contract.metric,
+  );
+  const sourceAgeDays = Math.floor((retrievedAt - sourceUpdatedAt) / 86_400_000);
+  if (
+    component === undefined ||
+    sourceAgeDays > component.freshnessDays ||
+    observationAgeDays > component.freshnessDays
+  ) {
+    throw new Error(`Latest FRED observation is stale for ${contract.sourceSeriesId}.`);
+  }
   return {
     metric: contract.metric,
     sourceSeriesId: contract.sourceSeriesId,
