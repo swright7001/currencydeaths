@@ -128,13 +128,51 @@ export function calculateDollarMetricFreshness(
   if (!Number.isFinite(asOf) || asOf < sourceUpdatedAt) {
     throw new Error("Freshness as-of time must be at or after the source update time.");
   }
-  const ageDays = Math.floor((asOf - sourceUpdatedAt) / 86_400_000);
+  const elapsedMs = asOf - sourceUpdatedAt;
+  const ageDays = Math.floor(elapsedMs / 86_400_000);
   const thresholdDays = dollarMetricDefinitions[metric].freshnessWindowDays;
   return {
     asOf,
     sourceUpdatedAt,
     ageDays,
     thresholdDays,
-    state: ageDays <= thresholdDays ? ("current" as const) : ("stale" as const),
+    state:
+      elapsedMs <= thresholdDays * 86_400_000
+        ? ("current" as const)
+        : ("stale" as const),
   };
+}
+
+export function calculateDollarMetricObservationAgeMs(
+  metric: DollarMetricKey,
+  observationDate: HistoricalDate,
+  asOf: number,
+) {
+  if (
+    observationDate.precision !== "month" ||
+    observationDate.month === undefined ||
+    !Number.isFinite(asOf)
+  ) {
+    throw new Error("Observation freshness requires a month-precision date and finite as-of time.");
+  }
+  const frequency = dollarMetricDefinitions[metric].frequency;
+  if (frequency === "quarterly" && ![1, 4, 7, 10].includes(observationDate.month)) {
+    throw new Error("Quarterly freshness requires a calendar-quarter start month.");
+  }
+  const endingMonth = frequency === "quarterly" ? observationDate.month + 2 : observationDate.month;
+  const periodEndedAt = Date.UTC(observationDate.year, endingMonth, 0, 23, 59, 59, 999);
+  if (asOf < periodEndedAt) {
+    throw new Error("Freshness as-of time must be at or after the observation period.");
+  }
+  return asOf - periodEndedAt;
+}
+
+export function calculateDollarMetricObservationAgeDays(
+  metric: DollarMetricKey,
+  observationDate: HistoricalDate,
+  asOf: number,
+) {
+  return Math.floor(
+    calculateDollarMetricObservationAgeMs(metric, observationDate, asOf) / 86_400_000,
+  );
 }

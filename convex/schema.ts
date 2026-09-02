@@ -123,6 +123,76 @@ export default defineSchema({
     .index("by_metric_and_observation_date_key", ["metric", "observationDateKey"])
     .index("by_fixture_batch_version", ["fixtureBatchVersion"]),
 
+  dollarMetricRefreshBatches: defineTable({
+    batchKey: v.string(),
+    payloadDigest: v.string(),
+    refreshVersion: v.string(),
+    methodologyVersion: v.string(),
+    retrievedAt: v.number(),
+    observationCount: v.number(),
+    missingCount: v.number(),
+    sources: v.array(
+      v.object({
+        metric: dollarMetricKeyValidator,
+        sourceSeriesId: v.string(),
+        title: v.string(),
+        publisher: v.string(),
+        url: v.string(),
+        unit: dollarMetricUnitValidator,
+        frequency: dollarMetricFrequencyValidator,
+        sourceUpdatedAt: v.number(),
+      }),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_batch_key", ["batchKey"])
+    .index("by_created_at", ["createdAt"]),
+
+  dollarMetricRevisions: defineTable({
+    batchId: v.id("dollarMetricRefreshBatches"),
+    metric: dollarMetricKeyValidator,
+    observationDate: historicalDateValidator,
+    observationDateKey: v.number(),
+    value: v.union(v.number(), v.null()),
+    unit: dollarMetricUnitValidator,
+    frequency: dollarMetricFrequencyValidator,
+    sourceSeriesId: v.string(),
+    sourceUpdatedAt: v.number(),
+    retrievedAt: v.number(),
+    sourceId: v.id("sources"),
+    createdAt: v.number(),
+  })
+    .index("by_batch_id", ["batchId"])
+    .index("by_batch_id_and_metric_and_observation_date_key", [
+      "batchId",
+      "metric",
+      "observationDateKey",
+    ]),
+
+  dollarMetricActiveDatasets: defineTable({
+    key: v.string(),
+    activeBatchId: v.id("dollarMetricRefreshBatches"),
+    previousBatchId: v.optional(v.id("dollarMetricRefreshBatches")),
+    activatedAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
+  dollarMetricRefreshRuns: defineTable({
+    runKey: v.string(),
+    mode: v.union(v.literal("scheduled"), v.literal("manual")),
+    outcome: v.union(
+      v.literal("activated"),
+      v.literal("unchanged"),
+      v.literal("failed"),
+    ),
+    batchKey: v.optional(v.string()),
+    errorCode: v.optional(v.string()),
+    startedAt: v.number(),
+    completedAt: v.number(),
+  })
+    .index("by_run_key", ["runKey"])
+    .index("by_completed_at", ["completedAt"]),
+
   methodologies: defineTable({
     name: v.string(),
     slug: v.string(),

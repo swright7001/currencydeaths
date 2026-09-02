@@ -17,6 +17,7 @@ import {
   buildHomepageDashboard,
   type HomepageDeliveryState,
 } from "../lib/data/homepage-dashboard";
+import { loadDollarDashboard } from "../lib/data/dollar-dashboard-repository";
 import {
   loadResearchCollection,
   type ResearchDeliverySource,
@@ -37,12 +38,19 @@ export function Homepage({
   deliveryState = "ready",
   dataset = verifiedCurrencySeed,
   researchSource = "repository",
+  dollarDashboard,
 }: Readonly<{
   deliveryState?: HomepageDeliveryState;
   dataset?: VerifiedCurrencyDataset;
   researchSource?: ResearchDeliverySource;
+  dollarDashboard?: Awaited<ReturnType<typeof loadDollarDashboard>>;
 }>) {
-  const dashboard = buildHomepageDashboard(deliveryState, dataset, researchSource);
+  const dashboard = buildHomepageDashboard(
+    deliveryState,
+    dataset,
+    researchSource,
+    dollarDashboard,
+  );
   const maximumBandCount = Math.max(
     1,
     ...dashboard.lifespan.distribution.map((band) => band.count),
@@ -242,6 +250,15 @@ export function Homepage({
 }
 
 export default async function Home() {
-  const loaded = await loadResearchCollection();
-  return <Homepage dataset={loaded.dataset} researchSource={loaded.source} />;
+  const [loaded, dollarDashboard] = await Promise.all([
+    loadResearchCollection(),
+    loadDollarDashboard(),
+  ]);
+  return (
+    <Homepage
+      dataset={loaded.dataset}
+      researchSource={loaded.source}
+      dollarDashboard={dollarDashboard}
+    />
+  );
 }

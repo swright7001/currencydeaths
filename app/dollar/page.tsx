@@ -5,10 +5,10 @@ import { MetricCard } from "../../components/metrics/metric-card";
 import { MetricTrend } from "../../components/metrics/metric-trend";
 import { SourceCitation } from "../../components/research/source-citation";
 import {
-  buildSnapshotDollarDashboard,
   formatHistoricalMonth,
   formatUtcDate,
 } from "../../lib/data/dollar-dashboard";
+import { loadDollarDashboard } from "../../lib/data/dollar-dashboard-repository";
 
 export const metadata: Metadata = {
   title: "U.S. Dollar Research Dashboard",
@@ -29,8 +29,9 @@ function formatStressSourceValue(value: number, unit: string) {
   return `${value.toLocaleString("en-US", { maximumFractionDigits: 5 })} ${unit}`;
 }
 
-export default function DollarDashboardPage() {
-  const dashboard = buildSnapshotDollarDashboard();
+export default async function DollarDashboardPage() {
+  const dashboard = await loadDollarDashboard();
+  const providerBacked = dashboard.freshnessBasis === "provider_retrieval";
 
   return (
     <main id="main-content" className="dollar-page">
@@ -45,13 +46,14 @@ export default function DollarDashboardPage() {
             </p>
           </div>
           <aside aria-label="Dashboard data release">
-            <span>Verified snapshot</span>
+            <span>{providerBacked ? "Official refresh batch" : "Verified snapshot"}</span>
             <dl>
               <div><dt>Current snapshot</dt><dd>{dashboard.datasetVersion}</dd></div>
               <div><dt>Stress baseline</dt><dd>{dashboard.stress.baselineVersion}</dd></div>
               <div><dt>Freshness evaluated</dt><dd>{formatUtcDate(dashboard.freshnessAsOf)}</dd></div>
+              <div><dt>Retrieved</dt><dd>{formatUtcDate(dashboard.retrievedAt)}</dd></div>
               <div><dt>Approved series</dt><dd>{dashboard.metrics.length}</dd></div>
-              <div><dt>Live ingestion</dt><dd>Offline</dd></div>
+              <div><dt>Refresh pipeline</dt><dd>{providerBacked ? "Scheduled" : "Repository snapshot"}</dd></div>
             </dl>
           </aside>
         </div>
@@ -162,7 +164,7 @@ export default function DollarDashboardPage() {
                 value={metric.displayValue}
                 unit={metric.unitLabel}
                 state={metric.freshness.state === "stale" ? "stale" : "sourced"}
-                detail={`Observation ${formatHistoricalMonth(metric.latest.observationDate)} · source updated ${formatUtcDate(metric.latest.sourceUpdatedAt)} · freshness at snapshot retrieval: ${metric.freshness.state} (${metric.freshness.ageDays}/${metric.freshness.thresholdDays}-day window).`}
+                detail={`Observation ${formatHistoricalMonth(metric.latest.observationDate)} · source updated ${formatUtcDate(metric.latest.sourceUpdatedAt)} · retrieved ${formatUtcDate(metric.source.accessedAt)} · freshness at evaluation: ${metric.freshness.state} (${metric.freshness.ageDays}/${metric.freshness.thresholdDays}-day window).`}
                 accessory={<MetricTrend direction={metric.trend} value={metric.trendValue} context={metric.trendContext} tone="neutral" />}
               />
               <SourceCitation
@@ -186,9 +188,9 @@ export default function DollarDashboardPage() {
           <header className="dollar-section-heading">
             <div>
               <p className="section-kicker">Short windows / explicit limitation</p>
-              <h2 id="dollar-history-title">Recent verified history</h2>
+              <h2 id="dollar-history-title">Bounded verified history</h2>
             </div>
-            <p>These five-point traces demonstrate the interface; they are not long-run evidence.</p>
+            <p>Each trace is capped at 120 stored observations and remains subject to source revisions.</p>
           </header>
           <div className="dollar-chart-grid">
             {dashboard.metrics.map((metric) => <MetricSeriesChart key={metric.key} metric={metric} />)}
@@ -199,7 +201,7 @@ export default function DollarDashboardPage() {
       <section className="shell-container dollar-limitations" aria-labelledby="dollar-limits-title">
         <div><p className="section-kicker">Interpretation boundary</p><h2 id="dollar-limits-title">Read the gaps first.</h2></div>
         <ul>
-          <li>Snapshot values are static and may differ from later revised source releases.</li>
+          <li>{providerBacked ? "FRED observations can be revised; every activated batch remains auditable." : "Repository snapshot values are static and may differ from later revised source releases."}</li>
           <li>Series have different units and frequencies; visual proximity does not make them directly comparable.</li>
           <li>M2 and CPI are one-sided: contraction and deflationary stress are outside v1.</li>
           <li>Debt/GDP already exceeds its p95 anchor and is clipped at 100 component points.</li>

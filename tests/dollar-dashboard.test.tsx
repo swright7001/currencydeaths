@@ -8,6 +8,7 @@ import {
   buildDollarDashboardFromSeries,
   formatHistoricalMonth,
 } from "../lib/data/dollar-dashboard";
+import { buildVerifiedDollarStressInputs } from "../lib/data/dollar-stress-baseline";
 
 describe("dollar dashboard model", () => {
   it("builds sorted metrics and the complete approved experimental score", () => {
@@ -84,11 +85,76 @@ describe("dollar dashboard model", () => {
       ]),
     ).toThrow("one freshness as-of time");
   });
+
+  it("derives the approved score from one active provider batch", () => {
+    const asOf = Date.UTC(2026, 8, 2);
+    const inputs = buildVerifiedDollarStressInputs(asOf);
+    const series = buildSnapshotDollarMetricSeries(asOf).map((item) => {
+      const component = inputs.find((candidate) =>
+        candidate.sourceSeriesId === item.latest.sourceSeriesId,
+      );
+      if (component === undefined || component.input.kind === "direct") return item;
+      return {
+        ...item,
+        datasetVersion: "fred-refresh-v1:fixture",
+        retrievedAt: asOf,
+        contextSeries: [
+          {
+            ...item.latest,
+            id: `${item.metric}:prior-year`,
+            value: component.input.priorYear.value,
+            observationDate: {
+              year: Number(component.input.priorYear.observationDate.slice(0, 4)),
+              month: Number(component.input.priorYear.observationDate.slice(5, 7)),
+              precision: "month" as const,
+            },
+          },
+          ...item.contextSeries,
+        ],
+      };
+    });
+    const dashboard = buildDollarDashboardFromSeries(series, {
+      datasetVersion: "fred-refresh-v1:fixture",
+      retrievedAt: asOf,
+    });
+    expect(dashboard.stress.score).toBe(43.5);
+    expect(dashboard.freshnessBasis).toBe("provider_retrieval");
+    expect(dashboard.datasetVersion).toBe("fred-refresh-v1:fixture");
+  });
+
+  it("withholds a provider score one millisecond beyond the approved period boundary", () => {
+    const julyPeriodEnd = Date.UTC(2026, 7, 0, 23, 59, 59, 999);
+    const asOf = julyPeriodEnd + (75 * 86_400_000) + 1;
+    const inputs = buildVerifiedDollarStressInputs(asOf);
+    const series = buildSnapshotDollarMetricSeries(asOf).map((item) => {
+      const component = inputs.find((candidate) => candidate.sourceSeriesId === item.latest.sourceSeriesId);
+      if (component === undefined || component.input.kind === "direct") return item;
+      return {
+        ...item,
+        contextSeries: [{
+          ...item.latest,
+          id: `${item.metric}:prior-year`,
+          value: component.input.priorYear.value,
+          observationDate: {
+            year: Number(component.input.priorYear.observationDate.slice(0, 4)),
+            month: Number(component.input.priorYear.observationDate.slice(5, 7)),
+            precision: "month" as const,
+          },
+        }, ...item.contextSeries],
+      };
+    });
+    const dashboard = buildDollarDashboardFromSeries(series, {
+      datasetVersion: "fred-refresh-v1:boundary",
+      retrievedAt: asOf,
+    });
+    expect(dashboard.stress.score).toBeNull();
+    expect(dashboard.stress.status).toBe("unavailable");
+  });
 });
 
 describe("dollar dashboard route", () => {
-  it("renders source, freshness, snapshot, methodology, and chart qualifications", () => {
-    const html = renderToStaticMarkup(<DollarDashboardPage />);
+  it("renders source, freshness, snapshot, methodology, and chart qualifications", async () => {
+    const html = renderToStaticMarkup(await DollarDashboardPage());
     expect(html).toContain("Verified snapshot");
     expect(html).toContain("43.5 / 100");
     expect(html).toContain("usd-stress-v1.0.0");
@@ -101,11 +167,11 @@ describe("dollar dashboard route", () => {
     expect(html).toContain("Source updated");
     expect(html).toContain("Accessed");
     expect(html).toContain("source updated");
-    expect(html).toContain("freshness at snapshot retrieval: current");
+    expect(html).toContain("freshness at evaluation: current");
     expect(html).toContain("relative change from");
     expect(html).toContain("observation values");
     expect(html).toContain("Verified dated snapshot");
-    expect(html).toContain("not long-run evidence");
+    expect(html).toContain("capped at 120 stored observations");
     expect(html).not.toContain("probability of failure");
   });
 });
