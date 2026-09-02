@@ -128,18 +128,22 @@ export function calculateDollarMetricFreshness(
   if (!Number.isFinite(asOf) || asOf < sourceUpdatedAt) {
     throw new Error("Freshness as-of time must be at or after the source update time.");
   }
-  const ageDays = Math.floor((asOf - sourceUpdatedAt) / 86_400_000);
+  const elapsedMs = asOf - sourceUpdatedAt;
+  const ageDays = Math.floor(elapsedMs / 86_400_000);
   const thresholdDays = dollarMetricDefinitions[metric].freshnessWindowDays;
   return {
     asOf,
     sourceUpdatedAt,
     ageDays,
     thresholdDays,
-    state: ageDays <= thresholdDays ? ("current" as const) : ("stale" as const),
+    state:
+      elapsedMs <= thresholdDays * 86_400_000
+        ? ("current" as const)
+        : ("stale" as const),
   };
 }
 
-export function calculateDollarMetricObservationAgeDays(
+export function calculateDollarMetricObservationAgeMs(
   metric: DollarMetricKey,
   observationDate: HistoricalDate,
   asOf: number,
@@ -160,5 +164,15 @@ export function calculateDollarMetricObservationAgeDays(
   if (asOf < periodEndedAt) {
     throw new Error("Freshness as-of time must be at or after the observation period.");
   }
-  return Math.floor((asOf - periodEndedAt) / 86_400_000);
+  return asOf - periodEndedAt;
+}
+
+export function calculateDollarMetricObservationAgeDays(
+  metric: DollarMetricKey,
+  observationDate: HistoricalDate,
+  asOf: number,
+) {
+  return Math.floor(
+    calculateDollarMetricObservationAgeMs(metric, observationDate, asOf) / 86_400_000,
+  );
 }

@@ -6,7 +6,7 @@ import {
   fredRefreshSeriesContracts,
 } from "../lib/data/fred-refresh-contract";
 import {
-  calculateDollarMetricObservationAgeDays,
+  calculateDollarMetricObservationAgeMs,
   dollarMetricDefinitions,
   dollarMetricKeys,
 } from "../lib/data/dollar-metric-contracts";
@@ -134,9 +134,9 @@ function validateSeries(args: {
     if (latestTimestamp > series.sourceUpdatedAt) {
       throw new ConvexError(`Refresh latest observation is after its source update: ${series.metric}.`);
     }
-    let observationAgeDays;
+    let observationAgeMs;
     try {
-      observationAgeDays = calculateDollarMetricObservationAgeDays(
+      observationAgeMs = calculateDollarMetricObservationAgeMs(
         series.metric,
         parseObservationDate(latest.date),
         args.retrievedAt,
@@ -149,13 +149,11 @@ function validateSeries(args: {
     const component = dollarStressMethodologyV1.components.find(
       (item) => item.sourceMetric === series.metric,
     );
-    const sourceAgeDays = Math.floor(
-      (args.retrievedAt - series.sourceUpdatedAt) / 86_400_000,
-    );
+    const maximumAgeMs = (component?.freshnessDays ?? 0) * 86_400_000;
     if (
       component === undefined ||
-      sourceAgeDays > component.freshnessDays ||
-      observationAgeDays > component.freshnessDays
+      args.retrievedAt - series.sourceUpdatedAt > maximumAgeMs ||
+      observationAgeMs > maximumAgeMs
     ) {
       throw new ConvexError(`Refresh latest observation is stale: ${series.metric}.`);
     }

@@ -121,6 +121,35 @@ describe("dollar dashboard model", () => {
     expect(dashboard.freshnessBasis).toBe("provider_retrieval");
     expect(dashboard.datasetVersion).toBe("fred-refresh-v1:fixture");
   });
+
+  it("withholds a provider score one millisecond beyond the approved period boundary", () => {
+    const julyPeriodEnd = Date.UTC(2026, 7, 0, 23, 59, 59, 999);
+    const asOf = julyPeriodEnd + (75 * 86_400_000) + 1;
+    const inputs = buildVerifiedDollarStressInputs(asOf);
+    const series = buildSnapshotDollarMetricSeries(asOf).map((item) => {
+      const component = inputs.find((candidate) => candidate.sourceSeriesId === item.latest.sourceSeriesId);
+      if (component === undefined || component.input.kind === "direct") return item;
+      return {
+        ...item,
+        contextSeries: [{
+          ...item.latest,
+          id: `${item.metric}:prior-year`,
+          value: component.input.priorYear.value,
+          observationDate: {
+            year: Number(component.input.priorYear.observationDate.slice(0, 4)),
+            month: Number(component.input.priorYear.observationDate.slice(5, 7)),
+            precision: "month" as const,
+          },
+        }, ...item.contextSeries],
+      };
+    });
+    const dashboard = buildDollarDashboardFromSeries(series, {
+      datasetVersion: "fred-refresh-v1:boundary",
+      retrievedAt: asOf,
+    });
+    expect(dashboard.stress.score).toBeNull();
+    expect(dashboard.stress.status).toBe("unavailable");
+  });
 });
 
 describe("dollar dashboard route", () => {

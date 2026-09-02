@@ -106,6 +106,18 @@ describe("official FRED refresh contract", () => {
     ).toThrow("observation is stale");
   });
 
+  it("rejects a monthly observation one millisecond beyond the approved boundary", () => {
+    const julyPeriodEnd = Date.UTC(2026, 7, 0, 23, 59, 59, 999);
+    expect(() =>
+      parseFredSeriesResponses(
+        contract,
+        metadata(),
+        observations(),
+        julyPeriodEnd + (75 * 86_400_000) + 1,
+      ),
+    ).toThrow("observation is stale");
+  });
+
   it("uses only source payload identity, not retrieval time, for idempotency", () => {
     const parsed = parseFredSeriesResponses(contract, metadata(), observations(), retrievedAt);
     const series = [parsed, parsed, parsed];

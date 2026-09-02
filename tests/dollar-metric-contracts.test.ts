@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateDollarMetricObservationAgeMs,
   calculateDollarMetricObservationAgeDays,
   calculateDollarMetricFreshness,
   findDollarMetricGaps,
@@ -95,5 +96,25 @@ describe("dollar metric contracts", () => {
       { year: 2026, month: 2, precision: "month" },
       Date.UTC(2026, 8, 2),
     )).toThrow("calendar-quarter start");
+    const periodEnd = Date.UTC(2026, 7, 0, 23, 59, 59, 999);
+    expect(calculateDollarMetricObservationAgeMs(
+      "m2",
+      { year: 2026, month: 7, precision: "month" },
+      periodEnd + (75 * 86_400_000) + 1,
+    )).toBe((75 * 86_400_000) + 1);
+  });
+
+  it("uses exact elapsed time at the source freshness boundary", () => {
+    const updatedAt = Date.UTC(2026, 6, 28);
+    expect(calculateDollarMetricFreshness(
+      "m2",
+      updatedAt,
+      updatedAt + (45 * 86_400_000),
+    ).state).toBe("current");
+    expect(calculateDollarMetricFreshness(
+      "m2",
+      updatedAt,
+      updatedAt + (45 * 86_400_000) + 1,
+    ).state).toBe("stale");
   });
 });

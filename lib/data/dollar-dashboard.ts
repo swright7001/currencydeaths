@@ -9,7 +9,7 @@ import {
   getDollarStressBand,
 } from "../methodology/dollar-stress-score";
 import {
-  calculateDollarMetricObservationAgeDays,
+  calculateDollarMetricObservationAgeMs,
   calculateDollarMetricFreshness,
   dollarMetricKeys,
   findDollarMetricGaps,
@@ -172,19 +172,18 @@ function buildDollarStressInputFromSeries(
     series.latest.unit !== component.sourceUnit
   ) return null;
   const currentDate = historicalMonthToIso(series.latest.observationDate);
-  const observationAgeDays = calculateDollarMetricObservationAgeDays(
+  const observationAgeMs = calculateDollarMetricObservationAgeMs(
     series.metric,
     series.latest.observationDate,
     series.freshness.asOf,
   );
-  const sourceAgeDays = Math.floor(
-    (series.freshness.asOf - series.latest.sourceUpdatedAt) / 86_400_000,
-  );
+  const sourceAgeMs = series.freshness.asOf - series.latest.sourceUpdatedAt;
+  const maximumAgeMs = component.freshnessDays * 86_400_000;
   const shared = {
     componentId,
     sourceSeriesId: series.latest.sourceSeriesId,
     freshness:
-      sourceAgeDays <= component.freshnessDays && observationAgeDays <= component.freshnessDays
+      sourceAgeMs <= maximumAgeMs && observationAgeMs <= maximumAgeMs
         ? ("current" as const)
         : ("stale" as const),
   } as const;

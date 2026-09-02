@@ -1,5 +1,5 @@
 import {
-  calculateDollarMetricObservationAgeDays,
+  calculateDollarMetricObservationAgeMs,
   dollarMetricDefinitions,
   type DollarMetricFrequency,
   type DollarMetricKey,
@@ -175,7 +175,7 @@ export function parseFredSeriesResponses(
   if (definition.frequency === "quarterly" && ![1, 4, 7, 10].includes(latestMonth)) {
     throw new Error(`Latest FRED quarter is not calendar-aligned for ${contract.sourceSeriesId}.`);
   }
-  const observationAgeDays = calculateDollarMetricObservationAgeDays(
+  const observationAgeMs = calculateDollarMetricObservationAgeMs(
     contract.metric,
     {
       year: Number(latest.date.slice(0, 4)),
@@ -187,11 +187,11 @@ export function parseFredSeriesResponses(
   const component = dollarStressMethodologyV1.components.find(
     (item) => item.sourceMetric === contract.metric,
   );
-  const sourceAgeDays = Math.floor((retrievedAt - sourceUpdatedAt) / 86_400_000);
+  const maximumAgeMs = (component?.freshnessDays ?? 0) * 86_400_000;
   if (
     component === undefined ||
-    sourceAgeDays > component.freshnessDays ||
-    observationAgeDays > component.freshnessDays
+    retrievedAt - sourceUpdatedAt > maximumAgeMs ||
+    observationAgeMs > maximumAgeMs
   ) {
     throw new Error(`Latest FRED observation is stale for ${contract.sourceSeriesId}.`);
   }

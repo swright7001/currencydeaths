@@ -164,4 +164,20 @@ describe("dollar metric refresh persistence", () => {
     ).rejects.toThrow("latest observation is stale");
     expect(await t.run((ctx) => ctx.db.query("dollarMetricRevisions").collect())).toEqual([]);
   });
+
+  it("rejects a batch one millisecond beyond the monthly observation boundary", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version: snapshotVersion });
+    const digest = "e".repeat(64);
+    const julyPeriodEnd = Date.UTC(2026, 7, 0, 23, 59, 59, 999);
+    await expect(
+      t.mutation(internal.dollarMetricRefreshStore.applyValidatedBatch, {
+        batchKey: `fred-refresh-v1:${digest}`,
+        payloadDigest: digest,
+        retrievedAt: julyPeriodEnd + (75 * 86_400_000) + 1,
+        series: refreshSeries(),
+      }),
+    ).rejects.toThrow("latest observation is stale");
+    expect(await t.run((ctx) => ctx.db.query("dollarMetricRefreshBatches").collect())).toEqual([]);
+  });
 });
