@@ -1,4 +1,4 @@
-import { buildFixtureDollarDashboard, formatHistoricalMonth } from "./dollar-dashboard";
+import { buildSnapshotDollarDashboard, formatHistoricalMonth } from "./dollar-dashboard";
 import {
   formatHistoricalDate,
   getCurrencyDetailFromDataset,
@@ -98,7 +98,7 @@ export function buildCurrencyComparison(
   const historical = getCurrencyDetailFromDataset(dataset, slug);
   if (historical === undefined) throw new Error(`Unknown comparison currency: ${slug}`);
 
-  const dashboard = buildFixtureDollarDashboard();
+  const dashboard = buildSnapshotDollarDashboard();
   const dollarMetric = new Map(dashboard.metrics.map((metric) => [metric.key, metric]));
   const m2 = dollarMetric.get("m2")!;
   const cpi = dollarMetric.get("cpi")!;
@@ -207,7 +207,7 @@ export function buildCurrencyComparison(
       mode: "contextual",
       interpretation: "Narrative context is shown only on the side supported by the current research seed.",
       usd: unavailable(
-        "No approved confidence or political-environment measure is in the dollar fixture.",
+        "No approved confidence or political-environment measure is in the dollar dataset.",
         "qualitative context",
         "current release",
       ),
@@ -224,7 +224,7 @@ export function buildCurrencyComparison(
       mode: "unavailable",
       interpretation: "Reserve status requires a sourced share series and historical definition; neither is inferred from reputation or outcome.",
       usd: unavailable(
-        "Global reserve-share data is not yet in the approved dollar fixture.",
+        "Global reserve-share data is not yet in the approved dollar dataset.",
         "% of allocated reserves",
         "not stored",
       ),
@@ -256,7 +256,7 @@ export function buildCurrencyComparison(
 
   return {
     historical,
-    fixtureVersion: dashboard.fixtureVersion,
+    datasetVersion: dashboard.datasetVersion,
     rows,
     counts: {
       direct: rows.filter((row) => row.mode === "direct").length,

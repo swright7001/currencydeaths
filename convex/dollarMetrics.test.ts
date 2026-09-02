@@ -5,17 +5,17 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
-const version = "usd-metrics-development-v1" as const;
+const version = "usd-metrics-verified-2026-09-02" as const;
 
-describe("dollar metric fixtures and query contracts", () => {
+describe("dollar metric verified snapshot and query contracts", () => {
   it("seeds idempotently and returns bounded provenance-first series", async () => {
     const t = convexTest(schema, modules);
-    expect(await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version })).toEqual({
+    expect(await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version })).toEqual({
       version,
       inserted: { sources: 3, observations: 15 },
       existing: { sources: 0, observations: 0 },
     });
-    expect(await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version })).toEqual({
+    expect(await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version })).toEqual({
       version,
       inserted: { sources: 0, observations: 0 },
       existing: { sources: 3, observations: 15 },
@@ -23,39 +23,38 @@ describe("dollar metric fixtures and query contracts", () => {
 
     const series = await t.query(api.dollarMetrics.getSeries, {
       metric: "m2",
-      asOf: Date.UTC(2026, 7, 11),
+      asOf: Date.UTC(2026, 8, 2),
       directionWindowSize: 3,
       contextLimit: 5,
     });
     expect(series).toMatchObject({
       metric: "m2",
       latest: {
-        observationDate: { year: 2026, month: 6, precision: "month" },
-        value: 23_155.2,
+        observationDate: { year: 2026, month: 7, precision: "month" },
+        value: 23_218,
         unit: "billions_usd_seasonally_adjusted",
         frequency: "monthly",
         sourceSeriesId: "M2SL",
         fixtureBatchVersion: version,
-        recordState: "development_fixture",
+        recordState: "verified",
         source: { url: "https://fred.stlouisfed.org/series/M2SL" },
       },
       freshness: { state: "current", thresholdDays: 45 },
-      developmentNotice:
-        "Development fixtures — not live data. Values may be revised; consult the cited source.",
+      developmentNotice: null,
       gaps: [],
     });
     expect(series?.directionWindow.map((observation) => observation.observationDate.month)).toEqual([
-      4, 5, 6,
+      5, 6, 7,
     ]);
     expect(series?.contextSeries).toHaveLength(5);
 
     expect(
-      await t.mutation(internal.dollarMetrics.removeDevelopmentFixtures, { version }),
+      await t.mutation(internal.dollarMetrics.removeVerifiedSnapshot, { version }),
     ).toEqual({ version, removedObservations: 15 });
     expect(
       await t.query(api.dollarMetrics.getSeries, {
         metric: "m2",
-        asOf: Date.UTC(2026, 7, 11),
+        asOf: Date.UTC(2026, 8, 2),
       }),
     ).toBeNull();
   });
@@ -125,7 +124,7 @@ describe("dollar metric fixtures and query contracts", () => {
 
   it("refuses to bless altered observations or sources as fixture-owned", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version });
+    await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version });
     let m2Id: Id<"dollarMetrics"> | undefined;
     await t.run(async (ctx) => {
       const m2 = await ctx.db
@@ -138,12 +137,12 @@ describe("dollar metric fixtures and query contracts", () => {
       await ctx.db.patch(m2._id, { value: -1 });
     });
     await expect(
-      t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version }),
+      t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version }),
     ).rejects.toThrow("conflicts with stored data");
 
     await t.run(async (ctx) => {
       if (m2Id === undefined) throw new Error("fixture observation id missing");
-      await ctx.db.patch(m2Id, { value: 23_155.2 });
+      await ctx.db.patch(m2Id, { value: 23_218 });
       const source = await ctx.db
         .query("sources")
         .withIndex("by_url", (q) => q.eq("url", "https://fred.stlouisfed.org/series/M2SL"))
@@ -152,13 +151,13 @@ describe("dollar metric fixtures and query contracts", () => {
       await ctx.db.patch(source._id, { publisher: "Altered publisher" });
     });
     await expect(
-      t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version }),
-    ).rejects.toThrow("Fixture source conflicts with stored data");
+      t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version }),
+    ).rejects.toThrow("Snapshot source conflicts with stored data");
   });
 
   it("aborts removal when a known fixture observation was altered", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version });
+    await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version });
     await t.run(async (ctx) => {
       const m2 = await ctx.db
         .query("dollarMetrics")
@@ -169,13 +168,13 @@ describe("dollar metric fixtures and query contracts", () => {
       await ctx.db.patch(m2._id, { notes: "Altered fixture note" });
     });
     await expect(
-      t.mutation(internal.dollarMetrics.removeDevelopmentFixtures, { version }),
-    ).rejects.toThrow("Fixture observation conflicts with stored data");
+      t.mutation(internal.dollarMetrics.removeVerifiedSnapshot, { version }),
+    ).rejects.toThrow("Snapshot observation conflicts with stored data");
   });
 
   it("aborts removal when a fixture batch contains an unknown observation", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(internal.dollarMetrics.applyDevelopmentFixtures, { version });
+    await t.mutation(internal.dollarMetrics.applyVerifiedSnapshot, { version });
 
     await t.run(async (ctx) => {
       const source = await ctx.db
@@ -194,13 +193,13 @@ describe("dollar metric fixtures and query contracts", () => {
         sourceUpdatedAt: Date.UTC(2020, 1, 1),
         fixtureBatchVersion: version,
         sourceId: source._id,
-        recordState: "development_fixture",
+        recordState: "verified",
         createdAt: 0,
         updatedAt: 0,
       });
     });
     await expect(
-      t.mutation(internal.dollarMetrics.removeDevelopmentFixtures, { version }),
+      t.mutation(internal.dollarMetrics.removeVerifiedSnapshot, { version }),
     ).rejects.toThrow("contains unexpected observations");
   });
 });

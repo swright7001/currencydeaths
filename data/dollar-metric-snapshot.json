@@ -1,0 +1,63 @@
+{
+  "version": "usd-metrics-verified-2026-09-02",
+  "retrievedAt": "2026-09-02T13:13:49Z",
+  "observationSha256": "25b4e436efcf3e6791147726a87b4dbf25e619e2b8d8f360eb4b1e1135c0ded9",
+  "sources": [
+    {
+      "key": "fred-m2sl",
+      "title": "M2 (M2SL)",
+      "publisher": "Board of Governors of the Federal Reserve System (US), via FRED",
+      "url": "https://fred.stlouisfed.org/series/M2SL",
+      "downloadUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL",
+      "downloadSha256": "7a6e79e6f5d9ded0f53abe7907677f4f73a29ddd731022239ddc19b34b670c45",
+      "sourceType": "central_bank",
+      "sourceSeriesId": "M2SL",
+      "sourceUpdatedAt": "2026-08-25T17:01:00Z",
+      "unit": "billions_usd_seasonally_adjusted",
+      "frequency": "monthly"
+    },
+    {
+      "key": "fred-cpiaucsl",
+      "title": "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average",
+      "publisher": "U.S. Bureau of Labor Statistics, via FRED",
+      "url": "https://fred.stlouisfed.org/series/CPIAUCSL",
+      "downloadUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
+      "downloadSha256": "5a102ceb6a4c5fe5a2e0319d6feca89b55dde6199e51de0760f42791a949cdaa",
+      "sourceType": "central_bank",
+      "sourceSeriesId": "CPIAUCSL",
+      "sourceUpdatedAt": "2026-08-12T14:10:00Z",
+      "unit": "index_1982_1984_100_seasonally_adjusted",
+      "frequency": "monthly"
+    },
+    {
+      "key": "fred-gfdegdq188s",
+      "title": "Federal Debt: Total Public Debt as Percent of Gross Domestic Product",
+      "publisher": "U.S. Office of Management and Budget and Federal Reserve Bank of St. Louis",
+      "url": "https://fred.stlouisfed.org/series/GFDEGDQ188S",
+      "downloadUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GFDEGDQ188S",
+      "downloadSha256": "2bd1ca53fa2cf7bfc51999e6eb1414a4de395eb0f84bb785f6b97ee0a2ca16d8",
+      "sourceType": "central_bank",
+      "sourceSeriesId": "GFDEGDQ188S",
+      "sourceUpdatedAt": "2026-06-25T13:01:00Z",
+      "unit": "percent_gdp_seasonally_adjusted",
+      "frequency": "quarterly"
+    }
+  ],
+  "observations": [
+    { "metric": "m2", "observationDate": "2026-03-01", "value": 22640.4, "sourceKey": "fred-m2sl" },
+    { "metric": "m2", "observationDate": "2026-04-01", "value": 22756.7, "sourceKey": "fred-m2sl" },
+    { "metric": "m2", "observationDate": "2026-05-01", "value": 23013.9, "sourceKey": "fred-m2sl" },
+    { "metric": "m2", "observationDate": "2026-06-01", "value": 23115.2, "sourceKey": "fred-m2sl" },
+    { "metric": "m2", "observationDate": "2026-07-01", "value": 23218.0, "sourceKey": "fred-m2sl" },
+    { "metric": "cpi", "observationDate": "2026-03-01", "value": 330.293, "sourceKey": "fred-cpiaucsl" },
+    { "metric": "cpi", "observationDate": "2026-04-01", "value": 332.407, "sourceKey": "fred-cpiaucsl" },
+    { "metric": "cpi", "observationDate": "2026-05-01", "value": 333.979, "sourceKey": "fred-cpiaucsl" },
+    { "metric": "cpi", "observationDate": "2026-06-01", "value": 332.568, "sourceKey": "fred-cpiaucsl" },
+    { "metric": "cpi", "observationDate": "2026-07-01", "value": 332.813, "sourceKey": "fred-cpiaucsl" },
+    { "metric": "federal_debt_to_gdp", "observationDate": "2025-01-01", "value": 120.54515, "sourceKey": "fred-gfdegdq188s" },
+    { "metric": "federal_debt_to_gdp", "observationDate": "2025-04-01", "value": 118.78171, "sourceKey": "fred-gfdegdq188s" },
+    { "metric": "federal_debt_to_gdp", "observationDate": "2025-07-01", "value": 121.02875, "sourceKey": "fred-gfdegdq188s" },
+    { "metric": "federal_debt_to_gdp", "observationDate": "2025-10-01", "value": 122.56815, "sourceKey": "fred-gfdegdq188s" },
+    { "metric": "federal_debt_to_gdp", "observationDate": "2026-01-01", "value": 122.59387, "sourceKey": "fred-gfdegdq188s" }
+  ]
+}

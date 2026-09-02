@@ -58,8 +58,8 @@ describe("cinematic homepage shell", () => {
     expect(html).toContain('aria-label="Selected-sample lifespan distribution"');
   });
 
-  it("exposes homepage provenance and fixture freshness", () => {
-    expect(html).toContain("Dollar inputs: development fixture");
+  it("exposes homepage provenance and snapshot freshness", () => {
+    expect(html).toContain("Dollar inputs: verified dated snapshot");
     expect(html).toContain("Historical records:");
     expect(html).toContain("Inspect dollar sources");
     expect(html).toContain("repository-backed");
