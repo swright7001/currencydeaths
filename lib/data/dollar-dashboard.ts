@@ -1,5 +1,11 @@
-import { calculateDollarStressScore } from "../calculations/dollar-stress-score";
-import { experimentalDollarStressMethodology } from "../methodology/dollar-stress-score";
+import {
+  calculateDollarStressScore,
+  calculateDollarStressSensitivity,
+} from "../calculations/dollar-stress-score";
+import {
+  dollarStressMethodologyV1,
+  getDollarStressBand,
+} from "../methodology/dollar-stress-score";
 import {
   calculateDollarMetricFreshness,
   dollarMetricKeys,
@@ -10,6 +16,10 @@ import {
   assertDollarMetricSnapshotIntegrity,
   dollarMetricSnapshot,
 } from "./dollar-metric-snapshot";
+import {
+  buildVerifiedDollarStressInputs,
+  dollarStressBaseline,
+} from "./dollar-stress-baseline";
 import type {
   DollarMetricQueryObservation,
   DollarMetricSeriesContract,
@@ -48,9 +58,29 @@ export type DollarDashboardModel = Readonly<{
   freshnessAsOf: number;
   metrics: readonly DollarDashboardMetric[];
   stress: Readonly<{
-    status: "unavailable" | "provisional_stale" | "experimental";
+    status: "unavailable" | "experimental";
     score: number | null;
+    band: string | null;
     methodologyVersion: string;
+    baselineVersion: string;
+    contributions: readonly Readonly<{
+      id: string;
+      label: string;
+      inputLabel: string;
+      rawValue: number;
+      normalizedScore: number;
+      weight: number;
+      pointContribution: number;
+      freshness: "current" | "stale";
+      observationDate: string;
+      sourceUpdatedAt: number;
+      sourceSeriesId: string;
+      sourceUrl: string;
+      lowerAnchor: number;
+      upperAnchor: number;
+      saturated: boolean;
+    }>[];
+    sensitivity: readonly Readonly<{ id: string; label: string; score: number }>[];
     missingComponents: readonly Readonly<{
       id: string;
       label: string;
@@ -199,11 +229,11 @@ export function buildDollarDashboardFromSeries(
   });
 
   const stressResult = calculateDollarStressScore(
-    experimentalDollarStressMethodology,
-    [],
+    dollarStressMethodologyV1,
+    buildVerifiedDollarStressInputs(),
   );
   const componentById = new Map(
-    experimentalDollarStressMethodology.components.map((component) => [component.id, component]),
+    dollarStressMethodologyV1.components.map((component) => [component.id, component]),
   );
 
   return {
@@ -217,7 +247,39 @@ export function buildDollarDashboardFromSeries(
     stress: {
       status: stressResult.status,
       score: stressResult.score,
+      band:
+        stressResult.score === null
+          ? null
+          : getDollarStressBand(stressResult.score, dollarStressMethodologyV1).label,
       methodologyVersion: stressResult.methodologyVersion,
+      baselineVersion: dollarStressBaseline.version,
+      contributions: stressResult.contributions.map((contribution) => {
+        const component = componentById.get(contribution.componentId)!;
+        return {
+          id: contribution.componentId,
+          label: component.label,
+          inputLabel: component.inputLabel,
+          rawValue: contribution.rawValue,
+          normalizedScore: contribution.normalizedScore,
+          weight: contribution.weight,
+          pointContribution: contribution.pointContribution,
+          freshness: contribution.freshness,
+          observationDate: contribution.observationDate,
+          sourceUpdatedAt: contribution.sourceUpdatedAt,
+          sourceSeriesId: contribution.sourceSeriesId,
+          sourceUrl: component.sourceUrl,
+          lowerAnchor: component.healthyBoundary,
+          upperAnchor: component.extremeBoundary,
+          saturated: contribution.normalizedScore >= 100,
+        };
+      }),
+      sensitivity:
+        stressResult.score === null
+          ? []
+          : calculateDollarStressSensitivity(
+              dollarStressMethodologyV1,
+              stressResult.contributions,
+            ),
       missingComponents: stressResult.missingComponents.map((id) => {
         const component = componentById.get(id)!;
         return {
@@ -225,9 +287,7 @@ export function buildDollarDashboardFromSeries(
           label: component.label,
           weight: component.weight,
           reason:
-            component.inputKind === "year_over_year_percent_change"
-              ? "Prior-year observation is absent from the verified snapshot."
-              : "Exact-day provenance is not represented by the month-precision snapshot.",
+            "The latest expected source period is missing or invalid; the full score is withheld.",
         };
       }),
     },

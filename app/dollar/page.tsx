@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/dollar" },
 };
 
+function formatStressObservation(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
 export default function DollarDashboardPage() {
   const dashboard = buildSnapshotDollarDashboard();
 
@@ -35,7 +43,8 @@ export default function DollarDashboardPage() {
           <aside aria-label="Dashboard data release">
             <span>Verified snapshot</span>
             <dl>
-              <div><dt>Dataset version</dt><dd>{dashboard.datasetVersion}</dd></div>
+              <div><dt>Current snapshot</dt><dd>{dashboard.datasetVersion}</dd></div>
+              <div><dt>Stress baseline</dt><dd>{dashboard.stress.baselineVersion}</dd></div>
               <div><dt>Freshness evaluated</dt><dd>{formatUtcDate(dashboard.freshnessAsOf)}</dd></div>
               <div><dt>Approved series</dt><dd>{dashboard.metrics.length}</dd></div>
               <div><dt>Live ingestion</dt><dd>Offline</dd></div>
@@ -47,23 +56,62 @@ export default function DollarDashboardPage() {
       <section className="shell-container dollar-stress-panel" aria-labelledby="dollar-stress-title">
         <div className="dollar-stress-panel__reading">
           <p className="section-kicker">Experimental stress model</p>
-          <h2 id="dollar-stress-title">Score withheld</h2>
+          <h2 id="dollar-stress-title">
+            {dashboard.stress.score === null ? "Score withheld" : `${dashboard.stress.score} / 100`}
+          </h2>
           <p>
-            The snapshot cannot satisfy every required input at approved precision.
-            Missing data is not converted to zero and no partial total is published.
+            {dashboard.stress.score === null
+              ? "A required input failed the approved freshness or validation contract. Missing data is never converted to zero."
+              : `${dashboard.stress.band} selected stress. This equal-weight experimental index describes three sourced signals; it is not a probability or forecast.`}
           </p>
           <Link href="/methodology/dollar-stress-score">
-            Review {dashboard.stress.methodologyVersion} →
+            Audit {dashboard.stress.methodologyVersion} →
           </Link>
+          {dashboard.stress.sensitivity.length > 0 ? (
+            <div className="dollar-stress-sensitivity">
+              <h3>Weight sensitivity</h3>
+              <p>Illustrative alternatives; only equal thirds are approved.</p>
+              <dl>
+                {dashboard.stress.sensitivity.map((scenario) => (
+                  <div key={scenario.id}>
+                    <dt>{scenario.label}</dt>
+                    <dd className="metric-numerals">{scenario.score}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
         </div>
         <ol className="dollar-stress-components">
-          {dashboard.stress.missingComponents.map((component, index) => (
+          {dashboard.stress.contributions.map((component, index) => (
             <li key={component.id}>
               <span className="metric-numerals">{String(index + 1).padStart(2, "0")}</span>
-              <div><strong>{component.label}</strong><p>{component.reason}</p></div>
-              <dl><dt>Weight</dt><dd>{component.weight * 100}%</dd><dt>Points</dt><dd>—</dd></dl>
+              <div>
+                <strong>{component.label}</strong>
+                <p>
+                  {component.inputLabel}: {component.rawValue.toFixed(2)} · {formatStressObservation(component.observationDate)} · {component.freshness}.
+                  {component.saturated ? " Clipped at the approved p95 ceiling." : ""}
+                </p>
+                <a href={component.sourceUrl} rel="noreferrer">FRED {component.sourceSeriesId} ↗</a>
+              </div>
+              <dl>
+                <dt>Weight</dt><dd>33⅓%</dd>
+                <dt>Baseline p20</dt><dd>{component.lowerAnchor.toFixed(2)}</dd>
+                <dt>Baseline p95</dt><dd>{component.upperAnchor.toFixed(2)}</dd>
+                <dt>Normalized</dt><dd>{component.normalizedScore.toFixed(1)}</dd>
+                <dt>Contribution</dt><dd>{component.pointContribution.toFixed(1)} pts</dd>
+              </dl>
             </li>
           ))}
+          {dashboard.stress.score === null
+            ? dashboard.stress.missingComponents.map((component, index) => (
+                <li key={component.id}>
+                  <span className="metric-numerals">{String(index + 1).padStart(2, "0")}</span>
+                  <div><strong>{component.label}</strong><p>{component.reason}</p></div>
+                  <dl><dt>Weight</dt><dd>33⅓%</dd><dt>Points</dt><dd>—</dd></dl>
+                </li>
+              ))
+            : null}
         </ol>
       </section>
 
@@ -123,6 +171,8 @@ export default function DollarDashboardPage() {
         <ul>
           <li>Snapshot values are static and may differ from later revised source releases.</li>
           <li>Series have different units and frequencies; visual proximity does not make them directly comparable.</li>
+          <li>M2 and CPI are one-sided: contraction and deflationary stress are outside v1.</li>
+          <li>Debt/GDP already exceeds its p95 anchor and is clipped at 100 component points.</li>
           <li>No result here predicts dollar failure, investment returns, or policy outcomes.</li>
         </ul>
       </section>

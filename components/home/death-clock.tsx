@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { DataStateBadge } from "../research/data-state-badge";
 
-type ClockUnit = Readonly<{
-  label: "Years" | "Months" | "Days" | "Hours";
-  value: string;
+type DollarStressIndexProps = Readonly<{
+  score: string | null;
+  band: string | null;
+  methodologyVersion: string;
+  contributions: readonly Readonly<{
+    id: string;
+    label: string;
+    normalizedScore: number;
+    pointContribution: number;
+  }>[];
 }>;
 
-type DeathClockProps = Readonly<{
-  units: readonly ClockUnit[];
-}>;
-
-export function DeathClock({ units }: DeathClockProps) {
+export function DollarStressIndex({
+  score,
+  band,
+  methodologyVersion,
+  contributions,
+}: DollarStressIndexProps) {
   return (
     <section className="death-clock" id="countdown" aria-labelledby="clock-title">
       <header className="death-clock__header">
@@ -18,25 +26,34 @@ export function DeathClock({ units }: DeathClockProps) {
           <p>U.S. dollar research instrument</p>
           <h2 id="clock-title">Experimental Dollar Stress Model</h2>
         </div>
-        <DataStateBadge state="fixture" />
+        <DataStateBadge state={score === null ? "unavailable" : "sourced"} />
       </header>
 
-      <div className="death-clock__display" role="group" aria-label="Illustrative model interval">
-        {units.map((unit) => (
-          <div key={unit.label}>
-            <span className="death-clock__value metric-numerals">{unit.value}</span>
-            <span className="death-clock__unit">{unit.label}</span>
-          </div>
-        ))}
+      <div className="death-clock__index" role="group" aria-label="Dollar Stress Index reading">
+        <div>
+          <span className="death-clock__index-value metric-numerals">{score ?? "—"}</span>
+          <span className="death-clock__index-scale metric-numerals">/ 100</span>
+        </div>
+        <strong>{band === null ? "Score withheld" : `${band} selected stress`}</strong>
       </div>
+
+      <ol className="death-clock__components" aria-label="Index component contributions">
+        {contributions.map((component) => (
+          <li key={component.id}>
+            <span>{component.label}</span>
+            <strong className="metric-numerals">{component.pointContribution.toFixed(1)} pts</strong>
+            <i aria-hidden="true" style={{ width: `${component.normalizedScore}%` }} />
+          </li>
+        ))}
+      </ol>
 
       <footer className="death-clock__footer">
         <p>
-          Visual fixture only. This interval does not run and is not a forecast,
-          probability, or predicted failure date.
+          Experimental index {methodologyVersion}. Not a probability, forecast,
+          investment signal, or predicted failure date.
         </p>
         <Link href="/methodology/dollar-stress-score">
-          How the future model will work →
+          Audit the inputs and weights →
         </Link>
       </footer>
     </section>

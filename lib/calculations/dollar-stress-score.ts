@@ -4,6 +4,7 @@ import {
   validateDollarStressMethodology,
   type DollarStressComponentId,
   type DollarStressMethodology,
+  type DollarStressSensitivityScenario,
 } from "../methodology/dollar-stress-score";
 
 type StressInputBase = Readonly<{
@@ -66,11 +67,17 @@ export type DollarStressContribution = Readonly<{
 export type DollarStressScoreResult = Readonly<{
   methodologyVersion: string;
   methodologyAsOf: string;
-  status: "experimental" | "provisional_stale" | "unavailable";
+  status: "experimental" | "unavailable";
   score: number | null;
   contributions: readonly DollarStressContribution[];
   missingComponents: readonly DollarStressComponentId[];
   staleComponents: readonly DollarStressComponentId[];
+}>;
+
+export type DollarStressSensitivityResult = Readonly<{
+  id: DollarStressSensitivityScenario["id"];
+  label: string;
+  score: number;
 }>;
 
 function round(value: number, precision: number) {
@@ -230,10 +237,10 @@ export function calculateDollarStressScore(
     if (input.freshness === "stale") staleComponents.push(component.id);
     contributions.push({
       componentId: component.id,
-      rawValue: round(derived.value, methodology.scorePrecision),
-      normalizedScore: round(normalized, methodology.scorePrecision),
+      rawValue: derived.value,
+      normalizedScore: normalized,
       weight: component.weight,
-      pointContribution: round(points, methodology.scorePrecision),
+      pointContribution: points,
       freshness: input.freshness,
       observationDate: derived.observationDate,
       sourceUpdatedAt: derived.sourceUpdatedAt,
@@ -243,7 +250,7 @@ export function calculateDollarStressScore(
     });
   }
 
-  if (missingComponents.length > 0) {
+  if (missingComponents.length > 0 || staleComponents.length > 0) {
     return {
       methodologyVersion: methodology.version,
       methodologyAsOf: methodology.asOf,
@@ -258,10 +265,34 @@ export function calculateDollarStressScore(
   return {
     methodologyVersion: methodology.version,
     methodologyAsOf: methodology.asOf,
-    status: staleComponents.length > 0 ? "provisional_stale" : "experimental",
+    status: "experimental",
     score: round(unroundedScore, methodology.scorePrecision),
     contributions,
     missingComponents,
     staleComponents,
   };
+}
+
+export function calculateDollarStressSensitivity(
+  methodology: DollarStressMethodology,
+  contributions: readonly DollarStressContribution[],
+): readonly DollarStressSensitivityResult[] {
+  if (contributions.length !== methodology.components.length) {
+    throw new Error("Sensitivity requires every methodology component.");
+  }
+  const byId = new Map(contributions.map((contribution) => [contribution.componentId, contribution]));
+  return methodology.sensitivityScenarios.map((scenario) => {
+    const unrounded = methodology.components.reduce((sum, component) => {
+      const contribution = byId.get(component.id);
+      if (contribution === undefined) {
+        throw new Error(`Sensitivity contribution missing: ${component.id}.`);
+      }
+      return sum + contribution.normalizedScore * scenario.weights[component.id];
+    }, 0);
+    return {
+      id: scenario.id,
+      label: scenario.label,
+      score: round(unrounded, methodology.scorePrecision),
+    };
+  });
 }

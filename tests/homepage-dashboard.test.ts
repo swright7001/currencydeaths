@@ -5,10 +5,15 @@ import {
 } from "../lib/data/homepage-dashboard";
 
 describe("homepage dashboard model", () => {
-  it("derives research summaries and withholds an incomplete stress score", () => {
+  it("derives research summaries and the approved experimental stress index", () => {
     const dashboard = buildHomepageDashboard();
 
-    expect(dashboard.stress).toMatchObject({ state: "unavailable", value: null });
+    expect(dashboard.stress).toMatchObject({
+      state: "sourced",
+      value: "43.5",
+      band: "Elevated",
+      methodologyVersion: "usd-stress-v1.0.0",
+    });
     expect(dashboard.stress.componentCount).toBe(3);
     expect(dashboard.lifespan.recordCount).toBe(5);
     expect(dashboard.lifespan.average).not.toBeNull();

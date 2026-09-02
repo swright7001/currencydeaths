@@ -10,7 +10,7 @@ import {
 } from "../lib/data/dollar-dashboard";
 
 describe("dollar dashboard model", () => {
-  it("builds sorted, source-verified snapshot metrics without publishing a partial score", () => {
+  it("builds sorted metrics and the complete approved experimental score", () => {
     const dashboard = buildSnapshotDollarDashboard();
     expect(dashboard.metrics.map((metric) => metric.key)).toEqual([
       "m2",
@@ -24,9 +24,11 @@ describe("dollar dashboard model", () => {
     expect(dashboard.metrics[1].trendValue).toBe("+0.07%");
     expect(dashboard.metrics[2].trendValue).toBe("+0.02%");
     expect(dashboard.metrics.every((metric) => metric.trendContext.includes("relative change"))).toBe(true);
-    expect(dashboard.stress.status).toBe("unavailable");
-    expect(dashboard.stress.score).toBeNull();
-    expect(dashboard.stress.missingComponents).toHaveLength(3);
+    expect(dashboard.stress.status).toBe("experimental");
+    expect(dashboard.stress.score).toBe(43.5);
+    expect(dashboard.stress.band).toBe("Elevated");
+    expect(dashboard.stress.contributions).toHaveLength(3);
+    expect(dashboard.stress.missingComponents).toHaveLength(0);
   });
 
   it("renders one sparse observation as a centered chart point", () => {
@@ -69,8 +71,10 @@ describe("dollar dashboard route", () => {
   it("renders source, freshness, snapshot, methodology, and chart qualifications", () => {
     const html = renderToStaticMarkup(<DollarDashboardPage />);
     expect(html).toContain("Verified snapshot");
-    expect(html).toContain("Score withheld");
-    expect(html).toContain("usd-stress-experimental-0.1.0");
+    expect(html).toContain("43.5 / 100");
+    expect(html).toContain("usd-stress-v1.0.0");
+    expect(html).toContain("Weight sensitivity");
+    expect(html).toContain("Clipped at the approved p95 ceiling");
     expect(html).toContain("source updated");
     expect(html).toContain("freshness at snapshot retrieval: current");
     expect(html).toContain("relative change from");

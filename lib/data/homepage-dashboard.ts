@@ -69,21 +69,18 @@ export function buildHomepageDashboard(
   return {
     deliveryState,
     deliveryNotice: deliveryNotice(deliveryState),
-    clock: {
-      state: "fixture" as const,
-      units: [
-        { label: "Years" as const, value: "08" },
-        { label: "Months" as const, value: "04" },
-        { label: "Days" as const, value: "17" },
-        { label: "Hours" as const, value: "13" },
-      ],
-    },
     stress: {
-      state: "unavailable" as const,
+      state: dollar.stress.score === null ? ("unavailable" as const) : ("sourced" as const),
       value: dollar.stress.score === null ? null : String(dollar.stress.score),
-      detail: `${dollar.stress.missingComponents.length} required methodology inputs are unavailable. No score is published.`,
+      band: dollar.stress.band,
+      detail:
+        dollar.stress.score === null
+          ? "One or more required inputs failed the approved freshness or validation policy. No score is published."
+          : `${dollar.stress.band} selected stress. Equal-weight composite of three source-verified components; not a failure probability.`,
       methodologyVersion: dollar.stress.methodologyVersion,
-      componentCount: dollar.stress.missingComponents.length,
+      baselineVersion: dollar.stress.baselineVersion,
+      componentCount: dollar.stress.contributions.length,
+      contributions: dollar.stress.contributions,
       sourceHref: "/methodology/dollar-stress-score",
     },
     lifespan: {
@@ -120,8 +117,11 @@ export function buildHomepageDashboard(
       {
         currency: "U.S. dollar / current system",
         period: `Snapshot retrieved ${formatUtcDate(dollar.freshnessAsOf)}`,
-        evidence: "unavailable" as const,
-        event: "Comparable stress score unavailable",
+        evidence: dollar.stress.score === null ? ("unavailable" as const) : ("sourced" as const),
+        event:
+          dollar.stress.score === null
+            ? "Dollar Stress Index unavailable"
+            : `${dollar.stress.score} / 100 · ${dollar.stress.band} selected stress`,
         outcome: "No outcome predicted",
         isDollar: true,
       },

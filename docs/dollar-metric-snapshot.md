@@ -8,6 +8,12 @@
 
 The artifact records the FRED series page and CSV URL, retrieval timestamp, source update timestamp, units, frequency, observation dates, and the SHA-256 checksum of each complete CSV response retrieved on September 2, 2026. FRED observations can be revised after retrieval, so the committed values must never be described as live.
 
+The separate `dollar-stress-baseline.json` artifact contains the frozen historical
+normalization window and matching prior-year observations for the owner-approved
+experimental score. See `docs/dollar-stress-methodology-v1.md`; the five-point
+dashboard traces remain intentionally unchanged and are not treated as the long-run
+baseline.
+
 Run the deterministic artifact checks with:
 
 ```bash

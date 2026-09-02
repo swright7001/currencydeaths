@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "data:validate": "node scripts/validate-dollar-snapshot.mjs"
+    "data:validate": "node scripts/validate-dollar-snapshot.mjs && node scripts/validate-dollar-stress-baseline.mjs",
+    "data:prepare-stress-baseline": "node scripts/prepare-dollar-stress-baseline.mjs"
   },
   "dependencies": {
     "convex": "^1.43.0",
