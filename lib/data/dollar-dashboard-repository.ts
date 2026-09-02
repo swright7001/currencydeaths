@@ -47,6 +47,12 @@ export async function loadDollarDashboard(
     const results = await Promise.all(
       dollarMetricKeys.map((metric) => (options.fetcher ?? defaultFetcher)(url, metric, asOf)),
     );
+    if (results.every((result) => result === null)) {
+      // A configured Convex deployment may exist before any dollar dataset has
+      // been activated. That explicit all-absent state keeps the audited
+      // repository snapshot as the baseline; partial or failed reads never do.
+      return buildSnapshotDollarDashboard();
+    }
     if (results.some((result) => result === null)) {
       throw new DollarDashboardDataError(
         "The configured dollar dataset is incomplete; no repository fallback was used.",

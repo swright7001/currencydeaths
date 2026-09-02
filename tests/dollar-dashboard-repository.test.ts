@@ -58,4 +58,15 @@ describe("dollar dashboard repository", () => {
     expect(dashboard.freshnessBasis).toBe("explicit_as_of");
     expect(dashboard.stress.score).toBe(43.5);
   });
+
+  it("uses the repository snapshot for an explicitly empty configured dollar store", async () => {
+    const dashboard = await loadDollarDashboard({
+      convexUrl: "https://example.convex.cloud",
+      asOf: Date.UTC(2026, 8, 2),
+      fetcher: async () => null,
+    });
+    expect(dashboard.datasetVersion).toBe("usd-metrics-verified-2026-09-02");
+    expect(dashboard.freshnessBasis).toBe("snapshot_retrieval");
+    expect(dashboard.stress.score).toBe(43.5);
+  });
 });
