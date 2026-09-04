@@ -54,4 +54,3 @@ describe("Dollar Stress Horizon methodology", () => {
     );
   });
 });
-
