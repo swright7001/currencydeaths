@@ -5,12 +5,22 @@ import Home, { Homepage } from "../app/page";
 describe("cinematic homepage shell", () => {
   const html = renderToStaticMarkup(<Homepage />);
 
-  it("frames the approved method as an experimental index rather than a countdown", () => {
-    expect(html).toContain("Experimental Dollar Stress Model");
+  it("frames the approved horizon as an illustrative scenario rather than a death date", () => {
+    expect(html).toContain("Dollar Stress Horizon");
+    expect(html).toContain("Illustrative horizon");
+    expect(html).toContain("Current trajectory");
+    expect(html).toContain("Fiscal acceleration");
+    expect(html).toContain("Stabilization");
+    expect(html).toContain("Estimated midpoint to extreme modeled stress");
+    expect(html).toContain("Illustrative range: 8–14 years");
     expect(html).toContain("43.5");
     expect(html).toContain("Elevated selected stress");
     expect(html).toContain("usd-stress-v1.0.0");
-    expect(html).toContain("Not a probability");
+    expect(html).toContain("usd-stress-horizon-v1.0.0");
+    expect(html).toContain("Neither is a probability");
+    expect(html).toContain("In plain English:");
+    expect(html).toContain("43.5 means elevated pressure");
+    expect(html).toContain("not a 43.5% chance that the dollar fails");
     expect(html).not.toContain("probability of failure");
     expect(html).not.toContain("time to failure");
   });

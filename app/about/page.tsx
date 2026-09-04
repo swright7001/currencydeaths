@@ -35,7 +35,7 @@ const researchRules = [
   "Currency replacement, redenomination, collapse, and historical retirement remain distinct outcomes.",
   "Date precision is preserved; year-level evidence does not become an invented day or month.",
   "The Dollar Stress Score is an experimental index, not a collapse probability or predicted death date.",
-  "The cinematic hero displays the approved index and component evidence; it is not a time-to-failure countdown.",
+  "The cinematic hero pairs the approved index with disclosed illustrative stress-horizon scenarios; neither is a time-to-failure countdown.",
   "Historical similarities provide context. They do not prove that two monetary systems share an outcome.",
 ] as const;
 

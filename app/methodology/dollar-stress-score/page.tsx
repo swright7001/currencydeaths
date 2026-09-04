@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { dollarStressMethodologyV1 } from "../../../lib/methodology/dollar-stress-score";
+import {
+  DOLLAR_STRESS_HORIZON_THRESHOLD,
+  DOLLAR_STRESS_HORIZON_VERSION,
+  dollarStressHorizonScenarios,
+} from "../../../lib/methodology/dollar-stress-horizon";
 
 export const metadata: Metadata = {
-  title: "Dollar Stress Score Methodology",
+  title: "Dollar Stress Score and Horizon Methodology",
   description:
-    "Review the experimental CurrencyDeaths normalization ranges, weights, missing-data policy, sources, and limitations.",
+    "Review the experimental CurrencyDeaths score inputs, illustrative horizon scenarios, missing-data policy, sources, and limitations.",
   alternates: { canonical: "/methodology/dollar-stress-score" },
 };
 
@@ -149,26 +154,63 @@ export default function DollarStressScoreMethodologyPage() {
       <section className="stress-methodology-policy" aria-labelledby="clock-policy-title">
         <div className="shell-container stress-methodology-policy__grid">
           <div>
-            <p className="section-kicker">Hero semantics / no invented time</p>
-            <h2 id="clock-policy-title">Index, not countdown.</h2>
+            <p className="section-kicker">Hero semantics / disclosed scenarios</p>
+            <h2 id="clock-policy-title">Horizon, not a death date.</h2>
           </div>
           <article>
-            <span>Approved decision</span>
-            <h3>No time-to-failure clock.</h3>
+            <span>{DOLLAR_STRESS_HORIZON_VERSION}</span>
+            <h3>Time to a display threshold.</h3>
             <p>
-              No v1 input maps stress to a defensible date. The hero displays the
-              index and component contributions while “Countdown to Zero” remains
-              visual direction only.
+              The horizon shows approved illustrative time ranges to the
+              {` ${DOLLAR_STRESS_HORIZON_THRESHOLD} / 100 `}
+              “Extreme modeled stress” band. It does not estimate when the dollar
+              will collapse, disappear, or be replaced.
             </p>
           </article>
           <article>
-            <span>Future boundary</span>
-            <h3>Time requires a new method.</h3>
+            <span>Precision boundary</span>
+            <h3>It does not tick continuously.</h3>
             <p>
-              Any future countdown needs a separately sourced, validated, versioned,
-              independently reviewed, and owner-approved measurable quantity.
+              Source observations update monthly and quarterly. Days remain zero,
+              and scenario values change only through a separately versioned,
+              reviewed, and owner-approved methodology decision.
             </p>
           </article>
+        </div>
+      </section>
+
+      <section className="shell-container stress-methodology-section" aria-labelledby="horizon-scenarios-title">
+        <header>
+          <div>
+            <p className="section-kicker">Illustrative policy assumptions / not fitted forecasts</p>
+            <h2 id="horizon-scenarios-title">Horizon scenario register</h2>
+          </div>
+          <p>These frozen display scenarios add context to current conditions; they are not inferred from historical failure dates.</p>
+        </header>
+        <div className="stress-component-grid">
+          {dollarStressHorizonScenarios.map((scenario) => (
+            <article key={scenario.id}>
+              <p>{scenario.label}</p>
+              <h3>
+                {scenario.midpoint === null
+                  ? "No finite crossing"
+                  : `${scenario.midpoint.years} years ${scenario.midpoint.months} months`}
+              </h3>
+              <dl>
+                <div><dt>Target</dt><dd className="metric-numerals">{DOLLAR_STRESS_HORIZON_THRESHOLD} / 100</dd></div>
+                <div>
+                  <dt>Illustrative range</dt>
+                  <dd>
+                    {scenario.range === null
+                      ? "Not published"
+                      : `${scenario.range.minimumYears}–${scenario.range.maximumYears} years`}
+                  </dd>
+                </div>
+                <div><dt>Day precision</dt><dd>Withheld / zero</dd></div>
+              </dl>
+              <p>{scenario.summary} Not a probability, prediction, or investment signal.</p>
+            </article>
+          ))}
         </div>
       </section>
 

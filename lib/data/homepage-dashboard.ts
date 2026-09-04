@@ -16,6 +16,7 @@ import {
   type VerifiedCurrencyDataset,
 } from "./verified-currency-seed";
 import type { ResearchDeliverySource } from "./research-repository";
+import { buildDollarStressHorizon } from "../methodology/dollar-stress-horizon";
 
 export const homepageDeliveryStates = ["ready", "loading", "error", "stale"] as const;
 export type HomepageDeliveryState = (typeof homepageDeliveryStates)[number];
@@ -69,6 +70,7 @@ export function buildHomepageDashboard(
     statusCounts.set(record.status, (statusCounts.get(record.status) ?? 0) + 1);
   }
   const sourceState = deliveryState === "stale" ? ("stale" as const) : ("sourced" as const);
+  const horizon = buildDollarStressHorizon(dollar.stress.score, dollar.stress.band);
 
   return {
     deliveryState,
@@ -87,6 +89,7 @@ export function buildHomepageDashboard(
       contributions: dollar.stress.contributions,
       sourceHref: "/methodology/dollar-stress-score",
     },
+    horizon,
     lifespan: {
       state: sourceState,
       recordCount: lifespan.count,
