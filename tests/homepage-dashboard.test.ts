@@ -3,6 +3,7 @@ import {
   buildHomepageDashboard,
   homepageDeliveryStates,
 } from "../lib/data/homepage-dashboard";
+import { buildSnapshotDollarDashboard } from "../lib/data/dollar-dashboard";
 
 describe("homepage dashboard model", () => {
   it("derives research summaries and the approved experimental stress index", () => {
@@ -15,6 +16,15 @@ describe("homepage dashboard model", () => {
       methodologyVersion: "usd-stress-v1.0.0",
     });
     expect(dashboard.stress.componentCount).toBe(3);
+    expect(dashboard.horizon).toMatchObject({
+      status: "illustrative",
+      version: "usd-stress-horizon-v1.0.0",
+      threshold: 80,
+    });
+    expect(dashboard.horizon.scenarios).toHaveLength(3);
+    expect(dashboard.horizon.plainLanguage).toContain(
+      "43.5 means elevated pressure",
+    );
     expect(dashboard.lifespan.recordCount).toBe(5);
     expect(dashboard.lifespan.average).not.toBeNull();
     expect(
@@ -24,6 +34,26 @@ describe("homepage dashboard model", () => {
     expect(
       dashboard.survival.counts.reduce((sum, item) => sum + item.value, 0),
     ).toBe(dashboard.survival.total);
+  });
+
+  it("withholds the horizon when a required dollar input is absent", () => {
+    const dollar = buildSnapshotDollarDashboard();
+    const dashboard = buildHomepageDashboard(
+      "ready",
+      undefined,
+      "repository",
+      {
+        ...dollar,
+        stress: {
+          ...dollar.stress,
+          status: "unavailable",
+          score: null,
+          band: null,
+        },
+      },
+    );
+
+    expect(dashboard.horizon.status).toBe("unavailable");
   });
 
   it("keeps historical outcomes distinct and makes no dollar prediction", () => {

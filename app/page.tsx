@@ -83,6 +83,7 @@ export function Homepage({
             band={dashboard.stress.band}
             methodologyVersion={dashboard.stress.methodologyVersion}
             contributions={dashboard.stress.contributions}
+            horizon={dashboard.horizon}
           />
         </div>
       </section>
@@ -229,7 +230,8 @@ export function Homepage({
           <p>
             Methodology {dashboard.stress.methodologyVersion} exposes {dashboard.stress.componentCount} inputs,
             their frozen historical anchors, equal weights, sensitivity, and fail-closed
-            missing-data policy. The hero is an index—not a countdown to dollar failure.
+            missing-data policy. Horizon {dashboard.horizon.version} adds disclosed illustrative
+            scenarios—not a countdown to dollar failure.
           </p>
           <Link href="/methodology/dollar-stress-score">Review experimental methodology →</Link>
         </div>
