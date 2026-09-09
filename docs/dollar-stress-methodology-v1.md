@@ -80,26 +80,16 @@ deflationary stress. Gross debt/GDP omits maturity, interest cost, currency
 denomination, assets, fiscal capacity, and reserve demand. Debt is already clipped
 at 100 under the p95 rule.
 
-No v1 input maps the score to a dollar failure date. The product therefore never
-publishes a time-to-failure countdown. The homepage pairs the verified Dollar
-Stress Index with the separately versioned `usd-stress-horizon-v1.0.0` scenario
-visualization. It estimates time only to the display-policy threshold of 80 / 100
-(“Extreme modeled stress”), not to collapse, replacement, or disappearance.
+No v1 input maps the score to a dollar failure date or time to a stress threshold.
+The homepage shows the verified Dollar Stress Index and its component contributions.
+No countdown is published without a supported time model.
 
-The horizon scenarios are frozen, owner-approved illustrative policy assumptions;
-they are not statistically fitted forecasts or correlations with historical
-currency deaths:
+### Retired illustration
 
-- Current trajectory: 11 years 2 months midpoint; 8–14 year illustrative range.
-- Fiscal acceleration: 6 years 1 month midpoint; 4–8 year illustrative range.
-- Stabilization: no finite threshold-crossing horizon is published.
-
-The display does not count down continuously. Source observations update monthly
-and quarterly, so day precision is withheld as zero. Scenario values may change
-only through a separately versioned, documented, independently reviewed, and
-owner-approved methodology revision. If the verified index is unavailable, the
-horizon is withheld as well.
-
+The illustrative usd-stress-horizon-v1.0.0 scenarios introduced on 2026-09-04
+were retired on 2026-09-08 after a first-principles review. Their frozen time ranges
+were not derived from the score or a fitted forecast. Removing them does not change
+Dollar Stress Score v1, its source artifacts, or its descriptive bands.
 ## Reproduction
 
 `npm run data:validate` verifies both dollar artifacts and independently reproduces

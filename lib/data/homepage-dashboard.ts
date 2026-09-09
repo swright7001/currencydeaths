@@ -16,7 +16,6 @@ import {
   type VerifiedCurrencyDataset,
 } from "./verified-currency-seed";
 import type { ResearchDeliverySource } from "./research-repository";
-import { buildDollarStressHorizon } from "../methodology/dollar-stress-horizon";
 
 export const homepageDeliveryStates = ["ready", "loading", "error", "stale"] as const;
 export type HomepageDeliveryState = (typeof homepageDeliveryStates)[number];
@@ -70,7 +69,6 @@ export function buildHomepageDashboard(
     statusCounts.set(record.status, (statusCounts.get(record.status) ?? 0) + 1);
   }
   const sourceState = deliveryState === "stale" ? ("stale" as const) : ("sourced" as const);
-  const horizon = buildDollarStressHorizon(dollar.stress.score, dollar.stress.band);
 
   return {
     deliveryState,
@@ -79,17 +77,10 @@ export function buildHomepageDashboard(
       state: dollar.stress.score === null ? ("unavailable" as const) : ("sourced" as const),
       value: dollar.stress.score === null ? null : String(dollar.stress.score),
       band: dollar.stress.band,
-      detail:
-        dollar.stress.score === null
-          ? "One or more required inputs failed the approved freshness or validation policy. No score is published."
-          : `${dollar.stress.band} selected stress. Equal-weight composite of three source-verified components; not a failure probability.`,
       methodologyVersion: dollar.stress.methodologyVersion,
-      baselineVersion: dollar.stress.baselineVersion,
       componentCount: dollar.stress.contributions.length,
       contributions: dollar.stress.contributions,
-      sourceHref: "/methodology/dollar-stress-score",
     },
-    horizon,
     lifespan: {
       state: sourceState,
       recordCount: lifespan.count,

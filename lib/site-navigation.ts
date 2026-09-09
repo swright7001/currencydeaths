@@ -1,5 +1,5 @@
 export const primaryNavigation = [
-  { href: "/", label: "Countdown" },
+  { href: "/", label: "Overview" },
   { href: "/dollar", label: "Dollar" },
   { href: "/deaths", label: "Past deaths" },
   { href: "/compare", label: "Compare" },

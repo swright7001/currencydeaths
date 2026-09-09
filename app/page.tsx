@@ -9,7 +9,6 @@ import {
 import {
   ChartFrame,
   DataStateBadge,
-  MethodologyTooltip,
   MetricCard,
   MetricTrend,
 } from "../components/research";
@@ -83,7 +82,6 @@ export function Homepage({
             band={dashboard.stress.band}
             methodologyVersion={dashboard.stress.methodologyVersion}
             contributions={dashboard.stress.contributions}
-            horizon={dashboard.horizon}
           />
         </div>
       </section>
@@ -105,20 +103,6 @@ export function Homepage({
         ) : null}
 
         <div className="homepage-metric-grid">
-          <MetricCard
-            label="U.S. Dollar Stress Score"
-            value={dashboard.stress.value}
-            state={dashboard.stress.state}
-            detail={dashboard.stress.detail}
-            footer={
-              <MethodologyTooltip
-                title={`Methodology ${dashboard.stress.methodologyVersion}`}
-                description="A score is withheld until every required source input satisfies the versioned methodology."
-                href={dashboard.stress.sourceHref}
-              />
-            }
-          />
-
           <MetricCard
             label="Verified historical records"
             value={String(dashboard.lifespan.recordCount)}
@@ -230,8 +214,7 @@ export function Homepage({
           <p>
             Methodology {dashboard.stress.methodologyVersion} exposes {dashboard.stress.componentCount} inputs,
             their frozen historical anchors, equal weights, sensitivity, and fail-closed
-            missing-data policy. Horizon {dashboard.horizon.version} adds disclosed illustrative
-            scenarios—not a countdown to dollar failure.
+            missing-data policy. It measures selected conditions without predicting dollar failure.
           </p>
           <Link href="/methodology/dollar-stress-score">Review experimental methodology →</Link>
         </div>
