@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { purchasingPowerExample } from "../../lib/calculations/purchasing-power-example";
+import type { DissolutionCurrency } from "../../lib/data/dissolution-currencies";
+import { currencyArtwork, type CurrencyArtwork } from "../../lib/data/currency-artwork";
 
 const TEXTURE = "/images/banknote-texture.png";
 const WIDTH = 1400;
@@ -13,13 +16,19 @@ const noise = (seed: number) => {
 };
 
 /** Texture-based 2.5D illustration. Geometry is decorative, never measurement. */
-function drawNote(context: CanvasRenderingContext2D, image: HTMLImageElement, loss: number) {
+function drawNote(context: CanvasRenderingContext2D, image: HTMLImageElement, loss: number, artwork?: CurrencyArtwork) {
   context.clearRect(0, 0, WIDTH, HEIGHT);
   const progress = loss / 100;
-  const left = 95;
-  const top = 85;
-  const width = 1040;
-  const height = 475;
+  const crop = artwork?.crop ?? [0, 0, 1, 1];
+  const sx = crop[0] * image.naturalWidth;
+  const sy = crop[1] * image.naturalHeight;
+  const sw = crop[2] * image.naturalWidth;
+  const sh = crop[3] * image.naturalHeight;
+  const scale = Math.min(1040 / sw, 475 / sh);
+  const width = sw * scale;
+  const height = sh * scale;
+  const left = (WIDTH - width) / 2 - 60;
+  const top = (HEIGHT - height) / 2;
   const edge = left + width * (1 - progress);
   context.save();
   context.translate(WIDTH / 2, HEIGHT / 2);
@@ -37,7 +46,7 @@ function drawNote(context: CanvasRenderingContext2D, image: HTMLImageElement, lo
     context.lineTo(left, top + height);
     context.closePath();
     context.clip();
-    context.drawImage(image, left, top, width, height);
+    context.drawImage(image, sx, sy, sw, sh, left, top, width, height);
     context.restore();
   }
   // Irregular tapered flakes follow the moving tear front; no rectangular tile grid.
@@ -64,19 +73,52 @@ function drawNote(context: CanvasRenderingContext2D, image: HTMLImageElement, lo
     context.closePath();
     context.fill();
     context.clip();
-    const sampleX = ((originX - left) / width) * image.naturalWidth;
-    const sampleY = ((originY - top) / height) * image.naturalHeight;
+    const sampleX = sx + ((originX - left) / width) * sw;
+    const sampleY = sy + ((originY - top) / height) * sh;
     context.drawImage(image, sampleX, sampleY, size * 3, size * 3, -size, -size, size * 2, size * 2);
     context.restore();
   }
   context.restore();
 }
 
-export function CurrencyDissolution() {
+export function CurrencyDissolution({ currencies }: { currencies: readonly DissolutionCurrency[] }) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const selected = currencies[selectedIndex] ?? currencies[0];
+  if (!selected) return null;
+  return (
+    <section className="dissolution shell-container" id="purchasing-power" aria-labelledby="dissolution-title">
+      <header className="dissolution__heading">
+        <p className="section-kicker">An interactive study of purchasing power</p>
+        <h2 id="dissolution-title">The note remains.<br /><span>The value disappears.</span></h2>
+      </header>
+      <div className="dissolution__picker">
+        <label htmlFor="exhibit-currency">Explore a currency</label>
+        <div>
+          <button type="button" aria-label="Previous currency" onClick={() => setSelectedIndex((selectedIndex + currencies.length - 1) % currencies.length)}>←</button>
+          <select id="exhibit-currency" value={selected.slug} onChange={(event) => setSelectedIndex(currencies.findIndex((currency) => currency.slug === event.target.value))}>
+            {currencies.map((currency) => <option key={currency.slug} value={currency.slug}>{currency.name}</option>)}
+          </select>
+          <button type="button" aria-label="Next currency" onClick={() => setSelectedIndex((selectedIndex + 1) % currencies.length)}>→</button>
+        </div>
+      </div>
+      <div className="dissolution__context" aria-live="polite">
+        <p className="section-kicker">{selected.country} · {selected.period}</p>
+        <h3>{selected.name}</h3>
+        <p>{selected.summary}</p>
+        <Link href={`/deaths/${selected.slug}`}>Read the currency’s history →</Link>
+      </div>
+      <CurrencyScene key={selected.slug} currency={selected} />
+    </section>
+  );
+}
+
+function CurrencyScene({ currency }: { currency: DissolutionCurrency }) {
+  const artwork = currencyArtwork[currency.slug];
+  const imageSource = artwork?.src ?? TEXTURE;
   const section = useRef<HTMLElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const texture = useRef<HTMLImageElement | null>(null);
-  const [loss, setLoss] = useState(35);
+  const [loss, setLoss] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -96,7 +138,7 @@ export function CurrencyDissolution() {
         const image = new window.Image();
         texture.current = image;
         image.onload = () => setReady(Boolean(canvas.current?.getContext("2d")));
-        image.src = TEXTURE;
+        image.src = imageSource;
       }
     });
     if (section.current) observer.observe(section.current);
@@ -109,12 +151,12 @@ export function CurrencyDissolution() {
       if (texture.current) texture.current.onload = null;
       texture.current = null;
     };
-  }, []);
+  }, [imageSource]);
 
   useEffect(() => {
     const context = canvas.current?.getContext("2d");
-    if (context && texture.current && ready) drawNote(context, texture.current, loss);
-  }, [loss, ready]);
+    if (context && texture.current && ready) drawNote(context, texture.current, loss, artwork);
+  }, [loss, ready, artwork]);
 
   useEffect(() => {
     if (!playing || reducedMotion) return;
@@ -134,18 +176,20 @@ export function CurrencyDissolution() {
   }, [playing, reducedMotion]);
 
   return (
-    <section ref={section} className="dissolution shell-container" id="purchasing-power" aria-labelledby="dissolution-title">
-      <header className="dissolution__heading">
-        <p className="section-kicker">An interactive study of purchasing power</p>
-        <h2 id="dissolution-title">The note remains.<br /><span>The value disappears.</span></h2>
-        <p>Move the slider. See how much the same money can still buy.</p>
-      </header>
+    <section ref={section} aria-label={`${currency.name} banknote exhibit`}>
       <div className="dissolution__stage" aria-hidden="true">
-        <Image src={TEXTURE} alt="" fill sizes="(max-width: 700px) 100vw, 1200px" className={`dissolution__fallback${ready ? " dissolution__fallback--hidden" : ""}`} />
+        <Image src={imageSource} alt="" fill sizes="(max-width: 700px) 100vw, 1200px" className={`dissolution__fallback${ready ? " dissolution__fallback--hidden" : ""}`} />
         <canvas ref={canvas} width={WIDTH} height={HEIGHT} className={ready ? "dissolution__canvas" : "dissolution__canvas dissolution__canvas--hidden"} />
       </div>
+      <p className="dissolution__art-credit">{artwork ? <>{artwork.label} · <a href={artwork.source}>{artwork.credit}</a> · {artwork.licenseUrl ? <a href={artwork.licenseUrl}>{artwork.license}</a> : artwork.license}. Display adapted with framing, tilt and illustrative masking.</> : "Representative illustration · not an authentic banknote"}</p>
+      {currency.isCurrencyUnion ? (
+        <div className="dissolution__context">
+          <h3>Replaced through currency union</h3>
+          <p>Successor: {currency.replacement}. The note stays intact here: replacement does not mean its purchasing power fell to zero.</p>
+        </div>
+      ) : (
       <div className="dissolution__controls">
-        <div className="dissolution__slider-label"><label htmlFor="purchasing-power-loss">Purchasing power lost</label><span>Illustrative example</span></div>
+        <div className="dissolution__slider-label"><label htmlFor="purchasing-power-loss">Purchasing power lost</label><span>Illustrative example · not historical measurements</span></div>
         <input id="purchasing-power-loss" type="range" min="0" max="100" step="1" value={loss} aria-valuetext={`${Math.round(loss)} percent lost. Buys ${Math.round(unitsRemaining)} of the original 100 units.`} onChange={(event) => { setPlaying(false); setLoss(Number(event.target.value)); }} />
         <div className="dissolution__scale" aria-hidden="true"><span>0% lost</span><span>100% lost</span></div>
         <div className="dissolution__bottom">
@@ -158,6 +202,7 @@ export function CurrencyDissolution() {
         </div>
         {reducedMotion ? <p className="dissolution__motion-note">Motion paused for your preference. Explore with the slider.</p> : null}
       </div>
+      )}
     </section>
   );
 }
