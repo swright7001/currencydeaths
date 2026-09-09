@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DollarStressIndex } from "../components/home/death-clock";
+import { CurrencyDissolution } from "../components/home/currency-dissolution";
 import { EmailSignup } from "../components/home/email-signup";
 import { CurrencyRecordCard } from "../components/home/currency-record-card";
 import {
@@ -85,6 +86,8 @@ export function Homepage({
           />
         </div>
       </section>
+
+      <CurrencyDissolution />
 
       <section className="homepage-dashboard shell-container" aria-labelledby="dashboard-title">
         <div className="homepage-section-heading">
