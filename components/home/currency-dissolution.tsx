@@ -118,13 +118,17 @@ export function CurrencyDissolution() {
 
   useEffect(() => {
     if (!playing || reducedMotion) return;
-    let value = loss;
-    const timer = window.setInterval(() => {
-      value = Math.min(100, value + 0.5);
+    const startedAt = performance.now();
+    const startingLoss = loss;
+    let frame = 0;
+    const advance = (now: number) => {
+      const value = Math.min(100, startingLoss + (now - startedAt) / 140);
       setLoss(value);
       if (value === 100) setPlaying(false);
-    }, 70);
-    return () => window.clearInterval(timer);
+      else frame = window.requestAnimationFrame(advance);
+    };
+    frame = window.requestAnimationFrame(advance);
+    return () => window.cancelAnimationFrame(frame);
     // Playback captures its starting value; slider input pauses it first.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, reducedMotion]);
